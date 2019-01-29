@@ -1,25 +1,126 @@
 paper.install(window);
 
+// Converts from degrees to radians.
+Math.radians = function(degrees) {
+    return degrees * Math.PI / 180;
+};
+
+// Converts from radians to degrees.
+Math.degrees = function(radians) {
+    return radians * 180 / Math.PI;
+};
+
 class Ray extends Path {
-    static create(posX, posY, color="white", angle=0, lightness=2) {
-        // Create a Paper.js Path to draw a line into it:
-        const ray = new this();
-        // Give the stroke a color
+    constructor(x, y, color, angle, lightness) {
+        super();
+
+        this.angle = angle;
+
+        this.point = {
+            start: {x: x, y: y},
+            end: {x: undefined, y: undefined}
+        }
+
+        this.config = {
+            color: color,
+            lightness: lightness
+        }
+    }
+
+    static create(x, y, color="white", angle=0, lightness=2) {
+        const ray = new this(x, y, color, angle, lightness);
+
         ray.strokeColor = color;
         ray.strokeWidth = 2;
         ray.strokeCap = 'butt';
         ray.strokeJoin = 'bevel';
         ray.shadowColor = color;
         ray.shadowBlur = lightness;
-        let start = new Point(posX, posY);
-        // Move to start and draw a line from there
+
+        let start = new Point(ray.point.start.x, ray.point.start.y);
         ray.moveTo(start);
-        // Note that the plus operator on Point objects does not work
-        // in JavaScript. Instead, we need to call the add() function:
-        ray.lineTo(start.add([ App.canvas.width*2, 0 ]).rotate(angle));
+        ray.lineTo(start.add([ App.canvas.width*5, 0 ]).rotate(ray.angle));
 
         return ray;
     }
+
+    reflectOnPoint(point, angle) {
+        this.endOnPoint(point);
+
+        return Ray.create(point.x, point.y, this.config.color, angle, this.lightness);
+    }
+
+    endOnPoint(point) {
+        this.endOnCoors(point.x, point.y);
+    }
+
+    endOnCoors(x, y) {
+        this.removeSegment(this.lastSegment.index);
+        this.point.end.x = x;
+        this.point.end.y = y;
+
+        this.lineTo(x, y);
+    }
+}
+
+class Mirror extends Path {
+    constructor(x1, y1, x2, y2) {
+        super();
+
+        this.angle = Angle.calculateFor2Points(x1, y1, x2, y2);
+    }
+
+    static create(x1, y1, x2, y2) {
+        let group = new Group();
+        let mirror = new this(x1, y1, x2, y2);
+
+        mirror.strokeColor = '#aefeff';
+        mirror.strokeWidth = 4;
+        mirror.moveTo(x1, y1);
+        mirror.lineTo(x2, y2);
+        mirror.name = "mirror";
+
+        group.addChild(mirror);
+        return mirror;
+    }
+}
+
+const testSuite = {
+    run: function() {
+        this.Angle_calculateForTwoPoints();
+    },
+
+    assert(expected, actual) {
+        console.log(expected === actual, expected, actual);
+    },
+
+    Angle_calculateForTwoPoints: function() {
+        this.assert(45, Angle.calculateFor2Points(0, 0, 10, 10));
+        this.assert(30, Angle.calculateFor2Points(0, 0, 4.3301, 2.5));
+        this.assert(26.5650, Angle.calculateFor2Points(0, 0, 6, 3));
+        this.assert(14.6208, Angle.calculateFor2Points(0, 0, 23, 6));
+    },
+}
+
+const Angle = {
+    calculateFor2Points: function (x1, y1, x2, y2) {
+        let a = Math.abs(x2 - x1);
+        let b = Math.abs(y2 - y1);
+        let c = Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
+
+        return round(Math.degrees(Math.asin(b/c)), 4);
+    },
+
+    calculateReflectionAngle: function(alfa, beta) {
+        return 2 * beta - alfa;
+    }
+};
+
+function round(number, precision) {
+    let factor = Math.pow(10, precision);
+    let tempNumber = number * factor;
+    let roundedTempNumber = Math.round(tempNumber);
+    return roundedTempNumber / factor;
 }
 
 const App = {
@@ -43,7 +144,7 @@ const App = {
         environment: {
             RI: 1,
         },
-        iteration: 2,
+        iteration: 5,
         fps: 1,
     },
 
@@ -56,8 +157,13 @@ const App = {
         // Create an empty project and a view for the canvas:
         paper.setup(this.canvas);
 
-        createMirror(this.canvas.width/3*2, this.canvas.height/3*2 - 25, this.canvas.width/3*2-25, this.canvas.height/3*2 + 75);
-        createMirror(this.canvas.width/3*2-100, this.canvas.height/3*2 - 120, this.canvas.width/3*2-100-25, this.canvas.height/3*2 - 20);
+        this.objects.push(
+            Mirror.create(this.canvas.width/3*2, this.canvas.height/3*2 - 25, this.canvas.width/3*2-25, this.canvas.height/3*2 + 75),
+            Mirror.create(this.canvas.width/3*2-100, this.canvas.height/3*2 - 120, this.canvas.width/3*2-100-25, this.canvas.height/3*2 - 20),
+            Mirror.create(400, 300, 500, 300),
+            Mirror.create(400, 310, 500, 310),
+            Mirror.create(400, 320, 500, 320)
+        );
         //createLen(canvas.width/3*2, canvas.height/3*2);
 
         //
@@ -134,7 +240,9 @@ const App = {
         // Compute light iteration times
         for(let i = 0; i < this.config.iteration; i++){
             this.rays.forEach((ray) => {
-                App.drawRay(ray);
+                if(ray.point.end.x === undefined) {
+                    App.calculateRay(ray);
+                }
             });
         }
 
@@ -148,13 +256,13 @@ const App = {
 
         //createRay(16, canvas.height/3*2);
         this.rays.push(
-            Ray.create(16, this.canvas.height/3*2-15, "#F00", 2, 4),
-            Ray.create(16, this.canvas.height/3*2+00, "#0F0", 0, 4),
-            Ray.create(16, this.canvas.height/3*2+15, "#06F", -2, 4)
+            Ray.create(100, 100, "#F00", 30, 4),
+            // Ray.create(16, this.canvas.height/3*2+00, "#0F0", 0, 4),
+            // Ray.create(16, this.canvas.height/3*2+15, "#06F", -2, 4)
         );
     },
 
-    drawRay: function(ray) {
+    calculateRay: function(ray) {
         let object = this.closestRayCollision(ray);
         if(object !== undefined) {
             this.collide(ray, object);
@@ -201,11 +309,9 @@ const App = {
                 let intersections = ray.getIntersections(object);
                 let intersection = intersections[intersections.length-1];
 
-                let probe = probeCollisionAngle(ray, object, intersection, 0);
-                let castVector = probe[0];
-                let vector = probe[1];
+                let reflectionAngle = Angle.calculateReflectionAngle(ray.angle, object.angle);
 
-                ray.lineTo( intersection.point.add( end.rotate( -2*(roundN(vector.angle) - roundN(castVector.angle)) ) ) );
+                this.rays.push(ray.reflectOnPoint(intersection.point, reflectionAngle));
                 break;
             case "len":
                 calcLenCollision(ray, object, end);
@@ -220,21 +326,6 @@ $(document).ready(() => {
 
 function roundN(num){
     return Math.round(num * 100) / 100
-}
-
-/// ### createMirror
-function createMirror(pos1X, pos1Y, pos2X, pos2Y){
-    var group = new Group();
-    var mirror = new Path();
-
-    mirror.strokeColor = '#aefeff';
-    mirror.strokeWidth = 4;
-    mirror.moveTo(pos1X, pos1Y);
-    mirror.lineTo(pos2X, pos2Y);
-    mirror.name = "mirror";
-
-    App.objects.push(mirror);
-    group.addChild(mirror);
 }
 
 /// ### createLen
@@ -287,12 +378,6 @@ function probeCollisionAngle(ray, object, intersection, i=0){
     cast1.remove();
 
     return [castVector, vector];
-}
-
-
-function calcMirrorCollision(ray, intersection, end, vector, castVector){
-    //                                              -2 *  (    B       -     A     )
-
 }
 
 function calcLenCollision(ray, len, end){
