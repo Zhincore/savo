@@ -48,7 +48,7 @@ class Ray extends Path {
 
         let start = new Point(ray.point.start.x, ray.point.start.y);
         ray.moveTo(start);
-        ray.lineTo(start.add([ App.canvas.width*5, 0 ]).rotate(ray.angle));
+        ray.lineTo(start.clone().add([ 1000, 0 ]).rotate(ray.angle, start));
 
         return ray;
     }
@@ -137,7 +137,7 @@ const Angle = {
              : (o1.point.start.y - intersectionPoint.y) / (o1.point.start.x - intersectionPoint.x)
         ;
         if((o2.point.start.x == o2.point.end.x) || false) {
-            m2 = 1;
+            m2 = null;
         } else {
             m2 = o2.point.start.x > o2.point.end.x
                 ? (o2.point.end.y - o2.point.start.y) / (o2.point.end.x - o2.point.start.x)
@@ -183,10 +183,14 @@ angle = Math.PI/2
 angle = Math.atan((m1-m2)/(1+m1*m2))
 }
          */
-        if(m1*m2==-1){
-            angle = Math.degrees(Math.PI/2);
-        }else{
-            angle = Math.degrees(Math.atan((m1-m2)/(1+m1*m2)));
+        if(m2 === null) {
+            angle = 2 * o1.angle;
+        } else {
+            if(m1*m2==-1){
+                angle = Math.degrees(Math.PI/2);
+            }else{
+                angle = Math.degrees(Math.atan((m1-m2)/(1+m1*m2)));
+            }
         }
 
         console.log(m1, m2, angle, round(angle, 0), (90 - round(angle, 0)) * 2);
@@ -257,16 +261,26 @@ const App = {
         paper.setup(this.canvas);
 
         this.objects.push(
-            Mirror.create(600, 600, 700, 800),
-            Mirror.create(600, 650, 800, 750),
-            Mirror.create(600, 650, 800, 750),
-            Mirror.create(this.canvas.width/3*2, this.canvas.height/3*2 - 25, this.canvas.width/3*2-25, this.canvas.height/3*2 + 75),
-            Mirror.create(this.canvas.width/3*2-100, this.canvas.height/3*2 - 120, this.canvas.width/3*2-100-25, this.canvas.height/3*2 - 20),
+            // Mirror.create(600, 600, 700, 800),
+            // Mirror.create(600, 650, 800, 750),
+            // Mirror.create(600, 650, 800, 750),
+            // Mirror.create(this.canvas.width/3*2, this.canvas.height/3*2 - 25, this.canvas.width/3*2-25, this.canvas.height/3*2 + 75),
+            // Mirror.create(this.canvas.width/3*2-100, this.canvas.height/3*2 - 120, this.canvas.width/3*2-100-25, this.canvas.height/3*2 - 20),
+
+            //horizontal mirrors
             Mirror.create(400, 300, 500, 300),
             Mirror.create(400, 310, 500, 310),
             Mirror.create(400, 320, 500, 320),
+
+            //vertical mirrors
             Mirror.create(400, 400, 400, 500),
-            Mirror.create(410, 400, 410, 500)
+            Mirror.create(410, 400, 410, 500),
+
+            //45* angled
+            Mirror.create(400, 400, 500, 500),
+            Mirror.create(500, 400, 400, 500),
+            Mirror.create(400, 400, 500, 500),
+            Mirror.create(500, 400, 400, 500)
         );
         //createLen(canvas.width/3*2, canvas.height/3*2);
 
@@ -367,6 +381,7 @@ const App = {
         //createRay(16, canvas.height/3*2);
         this.rays.push(
             Ray.create(100, 100, "#F00", 30, 4),
+            Ray.create(this.canvas.width - 100, 100, "#00F", 150, 4)
             // Ray.create(16, this.canvas.height/3*2+00, "#0F0", 0, 4),
             // Ray.create(16, this.canvas.height/3*2+15, "#06F", -2, 4)
         );
@@ -422,6 +437,7 @@ const App = {
                 let reflectionAngle = Angle.calculateReflectionAngleForObjects(ray, object, intersection.point);
                 // console.log(reflectionAngle);
 // console.log(intersection.point, ray.angle, reflectionAngle);
+                //                                                        180 reflect + reflection angle
                 this.rays.push(ray.reflectOnPoint(intersection.point, ray.angle + 180 + reflectionAngle));
                 break;
             case "len":
