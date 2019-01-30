@@ -14,6 +14,11 @@ class Ray extends Path {
     constructor(x, y, color, angle, lightness) {
         super();
 
+        //correcting variables
+        x = round(x, App.config.precision);
+        y = round(y, App.config.precision);
+        angle = round(angle % 360, App.config.precision);
+
         this.angle = angle;
 
         this.point = {
@@ -24,6 +29,10 @@ class Ray extends Path {
         this.config = {
             color: color,
             lightness: lightness
+        }
+
+        if(App.config.debug) {
+            App.debug(x,y - 30,`(x: ${x}, y: ${y}, ${angle}°)`);
         }
     }
 
@@ -43,7 +52,6 @@ class Ray extends Path {
 
         return ray;
     }
-
     reflectOnPoint(point, angle) {
         this.endOnPoint(point);
 
@@ -68,6 +76,11 @@ class Mirror extends Path {
         super();
 
         this.angle = Angle.calculateFor2Points(x1, y1, x2, y2);
+
+        this.point = {
+            start: {x: x1, y: y1},
+            end: {x: x2, y: y2}
+        }
     }
 
     static create(x1, y1, x2, y2) {
@@ -104,6 +117,8 @@ const testSuite = {
 
 const Angle = {
     calculateFor2Points: function (x1, y1, x2, y2) {
+        let q = 0;
+
         let a = Math.abs(x2 - x1);
         let b = Math.abs(y2 - y1);
         let c = Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
@@ -112,7 +127,80 @@ const Angle = {
     },
 
     calculateReflectionAngle: function(alfa, beta) {
-        return 2 * beta - alfa;
+        // return 2 * beta - alfa;
+        return beta + 90 - alfa;
+    },
+
+    calculateReflectionAngleForObjects: function(o1, o2, intersectionPoint) {
+        let m1 = o1.point.start.x > intersectionPoint.x
+             ? (intersectionPoint.y - o1.point.start.y) / (intersectionPoint.x - o1.point.start.x)
+             : (o1.point.start.y - intersectionPoint.y) / (o1.point.start.x - intersectionPoint.x)
+        ;
+        if((o2.point.start.x == o2.point.end.x) || false) {
+            m2 = 1;
+        } else {
+            m2 = o2.point.start.x > o2.point.end.x
+                ? (o2.point.end.y - o2.point.start.y) / (o2.point.end.x - o2.point.start.x)
+                : (o2.point.start.y - o2.point.end.y) / (o2.point.start.x - o2.point.end.x)
+            ;
+        }
+        let o2perpslope = -1 * m2;
+
+        /**
+         var dAx = A2x - A1x;
+         var dAy = A2y - A1y;
+         var dBx = B2x - B1x;
+         var dBy = B2y - B1y;
+         var angle = Math.atan2(dAx * dBy - dAy * dBx, dAx * dBx + dAy * dBy);
+         if(angle < 0) {angle = angle * -1;}
+         var degree_angle = angle * (180 / Math.PI);
+         */
+
+        // if(intersectionPoint.x > o1.point.start.x) {
+        //     var dAx = intersectionPoint.x - o1.point.start.x;
+        //     var dAy = intersectionPoint.y - o1.point.start.y;
+        // } else {
+        //     var dAx = o1.point.start.x - intersectionPoint.x;
+        //     var dAy = o1.point.start.y - intersectionPoint.y;
+        // }
+        //
+        // if(o2.point.end.x > o2.point.start.x) {
+        //     var dBx = o2.point.end.x - o2.point.start.x;
+        //     var dBy = o2.point.end.y - o2.point.end.x;
+        // } else {
+        //     var dBx = o2.point.start.x - o2.point.end.x;
+        //     var dBy = o2.point.end.x - o2.point.end.y;
+        // }
+        // var angle = Math.atan2(dAx * dBy - dAy * dBx, dAx * dBx + dAy * dBy);
+        // if(angle < 0) {angle = angle * -1;}
+        // var degree_angle = Math.degrees(angle);
+
+        /**
+         *
+if(m1*m2==-1){
+angle = Math.PI/2
+}else{
+angle = Math.atan((m1-m2)/(1+m1*m2))
+}
+         */
+        if(m1*m2==-1){
+            angle = Math.degrees(Math.PI/2);
+        }else{
+            angle = Math.degrees(Math.atan((m1-m2)/(1+m1*m2)));
+        }
+
+        console.log(m1, m2, angle, round(angle, 0), (90 - round(angle, 0)) * 2);
+        return (90 - round(angle, 0)) * 2;
+
+        // angleBetweenSlopes = Math.degrees(Math.PI - Math.abs(Math.atan(o1slope) - Math.atan(o2slope)));
+        // console.log(angleBetweenSlopes);
+        let angleBetweenSlopes = Math.degrees(Math.atan((o1slope - o2slope) / (1 - o1slope * o2slope)));
+        // console.log(angleBetweenSlopes);
+        // angleBetweenSlopes = Math.atan2(o1.point.start.y - intersectionPoint.y, o1.point.start.x - intersectionPoint.x)
+            - Math.atan2(o2.point.start.y - intersectionPoint.y, o2.point.start.x - intersectionPoint.x);
+        // console.log(angleBetweenSlopes);
+        return (90 - angleBetweenSlopes) * 2;
+        // return this.calculateReflectionAngle(o1.angle, o2.angle);
     }
 };
 
@@ -130,6 +218,7 @@ const App = {
 
     rays: [],
     objects: [],
+    debugs: [],
 
     selectionRectangle: null,
     dragged: null,
@@ -144,8 +233,18 @@ const App = {
         environment: {
             RI: 1,
         },
-        iteration: 5,
-        fps: 1,
+        iteration: 25,
+        fps: 25,
+        debug: true,
+        precision: 2
+    },
+
+    debug: function(x,y,content) {
+        const text = new PointText(new Point(x, y));
+        this.debugs.push(text);
+        text.justification = 'center';
+        text.fillColor = '#ddd';
+        text.content = content;
     },
 
     init: function() {
@@ -158,11 +257,16 @@ const App = {
         paper.setup(this.canvas);
 
         this.objects.push(
+            Mirror.create(600, 600, 700, 800),
+            Mirror.create(600, 650, 800, 750),
+            Mirror.create(600, 650, 800, 750),
             Mirror.create(this.canvas.width/3*2, this.canvas.height/3*2 - 25, this.canvas.width/3*2-25, this.canvas.height/3*2 + 75),
             Mirror.create(this.canvas.width/3*2-100, this.canvas.height/3*2 - 120, this.canvas.width/3*2-100-25, this.canvas.height/3*2 - 20),
             Mirror.create(400, 300, 500, 300),
             Mirror.create(400, 310, 500, 310),
-            Mirror.create(400, 320, 500, 320)
+            Mirror.create(400, 320, 500, 320),
+            Mirror.create(400, 400, 400, 500),
+            Mirror.create(410, 400, 410, 500)
         );
         //createLen(canvas.width/3*2, canvas.height/3*2);
 
@@ -185,6 +289,8 @@ const App = {
                     }*/
 
                 } else if(path.name === "mirror" || path.name === "len"){
+                    console.log(path);
+
                     if(this.selectionRectangle && !path.parent.children["selection rectangle"]) this.selectionRectangle.remove();
                     var b = path.bounds.clone().expand(10, 10);
 
@@ -251,6 +357,10 @@ const App = {
     },
 
     draw: function(){
+        if(this.config.debug) {
+            this.debugs.forEach((debug) => { debug.remove() });
+        }
+
         this.rays.forEach((ray) => { ray.remove(); });
         this.rays = [];
 
@@ -309,9 +419,10 @@ const App = {
                 let intersections = ray.getIntersections(object);
                 let intersection = intersections[intersections.length-1];
 
-                let reflectionAngle = Angle.calculateReflectionAngle(ray.angle, object.angle);
-
-                this.rays.push(ray.reflectOnPoint(intersection.point, reflectionAngle));
+                let reflectionAngle = Angle.calculateReflectionAngleForObjects(ray, object, intersection.point);
+                // console.log(reflectionAngle);
+// console.log(intersection.point, ray.angle, reflectionAngle);
+                this.rays.push(ray.reflectOnPoint(intersection.point, ray.angle + 180 + reflectionAngle));
                 break;
             case "len":
                 calcLenCollision(ray, object, end);
