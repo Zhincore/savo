@@ -45,6 +45,7 @@ class Ray extends Path {
         ray.strokeJoin = 'bevel';
         ray.shadowColor = color;
         ray.shadowBlur = lightness;
+        ray.sendToBack();
 
         let start = new Point(ray.point.start.x, ray.point.start.y);
         ray.moveTo(start);
@@ -71,11 +72,67 @@ class Ray extends Path {
     }
 }
 
+class LightSource extends Group {
+    constructor(x, y, color, angle, lightness, size=20){
+        super();
+        
+        //correcting variables
+        x = round(x, App.config.precision);
+        y = round(y, App.config.precision);
+        angle = round(angle % 360, App.config.precision);
+        
+        this.angle = angle;
+        this.size = size;
+        this.object = undefined;
+
+        this.point = {
+            start: new Point(x, y),
+            end: {x: undefined, y: undefined}
+        }
+
+        this.config = {
+            color: color,
+            lightness: lightness
+        }
+    }
+    
+    static create(x, y, color, angle, lightness, size=20) {
+        let lightSource = new this(x, y, color, angle, lightness, size);
+        let sourceObject = new Path.Rectangle(lightSource.point.start.subtract(new Point(size/2, size/2)), lightSource.size);
+        sourceObject.fillColor = color;
+        sourceObject.shadowColor = color;
+        sourceObject.shadowBlur = lightness;
+        sourceObject.data.movable = true;
+        
+        sourceObject.rotate(lightSource.angle);
+        lightSource.addChild(sourceObject);
+        lightSource.object = sourceObject;
+        
+        return lightSource;
+    }
+    
+    fire() {
+        this.update();
+        let lightRay = Ray.create(this.point.start.x, this.point.start.y, this.config.color, this.angle, this.config.lightness);
+        return lightRay;
+    }
+    
+    update() {
+        this.point.start = this.object.position;
+    }
+    
+    rotate(angle){
+        this.angle += angle;
+        super.rotate(angle, this.object.position);
+    }
+}
+
 class Mirror extends Path {
     constructor(x1, y1, x2, y2) {
         super();
 
         this.angle = Angle.calculateFor2Points(x1, y1, x2, y2);
+        this.data.movable = true;
 
         this.point = {
             start: {x: x1, y: y1},
@@ -87,7 +144,7 @@ class Mirror extends Path {
         let group = new Group();
         let mirror = new this(x1, y1, x2, y2);
 
-        mirror.strokeColor = '#aefeff';
+        mirror.strokeColor = '#affeff66';
         mirror.strokeWidth = 4;
         mirror.moveTo(x1, y1);
         mirror.lineTo(x2, y2);
@@ -95,6 +152,11 @@ class Mirror extends Path {
 
         group.addChild(mirror);
         return mirror;
+    }
+    
+    rotate(angle){
+        this.angle += angle;
+        super.rotate(angle);
     }
 }
 
@@ -221,18 +283,21 @@ const App = {
     needsUpdate: true,
 
     rays: [],
+    sources: [],
     objects: [],
     debugs: [],
 
     selectionRectangle: null,
     dragged: null,
+    rotating: false,
+    scaling: false,
 
     config: {
         hitOptions: {
             segments: true,
             stroke: true,
             fill: true,
-            tolerance: 5
+            tolerance: 10
         },
         environment: {
             RI: 1,
@@ -283,6 +348,11 @@ const App = {
             Mirror.create(500, 400, 400, 500)
         );
         //createLen(canvas.width/3*2, canvas.height/3*2);
+        
+        this.sources.push(
+            LightSource.create(100, 100, "#F00", 30, 4),
+            LightSource.create(this.canvas.width - 100, 100, "#00F", 150, 4)
+        );
 
         //
         // EVENTS
@@ -297,14 +367,7 @@ const App = {
             if (hitResult) {
                 let path = hitResult.item;
 
-                if(this.selectionRectangle !== null && path.name === "selection rectangle"){
-                    /*if (hitResult.type == 'fill'){
-                        path.position = event.point;
-                    }*/
-
-                } else if(path.name === "mirror" || path.name === "len"){
-                    console.log(path);
-
+                if(path.data.movable === true){
                     if(this.selectionRectangle && !path.parent.children["selection rectangle"]) this.selectionRectangle.remove();
                     var b = path.bounds.clone().expand(10, 10);
 
@@ -330,18 +393,38 @@ const App = {
         view.onMouseDrag = (event) => {
             let hitResult = project.hitTest(event.point, this.config.hitOptions);
             let path = hitResult ? hitResult.item : null;
+            
+            if(this.dragged && (this.selectionRectangle !== null && this.dragged.name === "selection rectangle")){
+                if(this.rotating){//rotate
+                    this.selectionRectangle.parent.rotate(event.point.x - this.rotating.x); 
+                    this.rotating = event.point;
 
-            if(this.dragged){
-                if(this.selectionRectangle !== null && this.dragged.name === "selection rectangle")
+                }else if(this.scaling){//scale
+                    this.selectionRectangle.parent.scaling.set(this.selectionRectangle.parent.scaling.x + ((event.point.x - this.scaling.x) / 100));
+                    this.scaling = event.point;
+
+                }else{//drag
                     this.selectionRectangle.parent.position = event.point;
-            } else if(path){
-                if(this.selectionRectangle !== null && path.name === "selection rectangle")
-                    this.dragged = path;
+                }
+
+            }else if(path && this.selectionRectangle !== null && path.name === "selection rectangle"){
+                this.dragged = path;
+                
+                if(hitResult.type === 'segment' && this.selectionRectangle !== null && path.name === "selection rectangle"){
+                    if(hitResult.segment.index >= 2 && hitResult.segment.index <= 4){
+                        // rotation
+                        this.rotating = event.point;
+                    }else{
+                        // scaling
+                        this.scaling = event.point;
+                    }
+ 
+                }
             }
         };
 
         view.onMouseUp = (event) => {
-            this.dragged = null;
+            this.dragged = this.rotating = this.scaling = null;
         };
 
         //
@@ -379,12 +462,9 @@ const App = {
         this.rays = [];
 
         //createRay(16, canvas.height/3*2);
-        this.rays.push(
-            Ray.create(100, 100, "#F00", 30, 4),
-            Ray.create(this.canvas.width - 100, 100, "#00F", 150, 4)
-            // Ray.create(16, this.canvas.height/3*2+00, "#0F0", 0, 4),
-            // Ray.create(16, this.canvas.height/3*2+15, "#06F", -2, 4)
-        );
+        this.sources.forEach((source) => {
+            this.rays.push(source.fire())
+        });
     },
 
     calculateRay: function(ray) {
@@ -444,6 +524,14 @@ const App = {
                 calcLenCollision(ray, object, end);
                 break;
         }
+    },
+    
+    addMirror: function(x1, y1, x2, y2) {
+        this.objects.push(Mirror.create(x1, y1, x2, y2));
+    },
+    
+    addRay: function(x1, y1) {
+        this.sources.push(LightSource.create(x1, y1, "#FFF", 0, 4));
     }
 };
 

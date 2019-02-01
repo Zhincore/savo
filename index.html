@@ -4,19 +4,106 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="height=device-height, initial-scale=1.0">
     <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/fontawesome-all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <title>SaVO - Simulátor a Vizualizátor Optiky</title>
 </head>
 <body>
-    <div id="overlay">
+    <div id="panel">
+    
+        <div id="bar">
+            <hgroup id="header">
+                <h1>SaVO</h1>
+                <h2 class="trn" data-trn="*headerline">Simulátor a Vizualizátor Optiky</h2>
+            </hgroup>
+            
+            <form class="form form-inline" id="lang-form" action="">
+                <label for="lang-select"><i class="fas fa-language fa-lg"></i>&nbsp;</label>
+                <select id="lang-select">
+                    <option value="cs">CZ</option>
+                    <option value="en">EN</option>
+                </select>
+            </form>
+        </div>
+        
+        <div id="toolbar">
+            <div class="sector">
+                <h3><i class="fas fa-tree"></i> <span class="trn" data-trn="enviroment">Enviroment</span></h3>
+                <span class="text-muted">TODO: Settings and stuff. Like material (water/glass/air/vaccum etc.) changing RI and BG color... also iteration setting</span>
+            </div>
+            
+            <div class="sector toolbar-d">
+                <h3>Sum more</h3>
+                <span class="text-muted">TODO: Maybe settings of currently selected element (changing ray color, lens D, RI etc.)</span>
+            </div>
+            
+            <div class="sector toolbar-d">
+                <button class="btn btn-primary trn" data-trn="recalculate">Recalculate</button>
+                
+                <div class="dropdown">
+                    <button id="tools-dropdown" class="w-100 collapsed" data-toggle="collapse" data-target="#tools-wrap"><span class="trn" data-trn="tools">Tools</span> </button>
+                    <div class="collapse" id="tools-wrap">
+                        <div id="tools">
+                            <button class="tool-btn" onclick="makeMirror(this)">
+                                <i class="far fa-square"></i>
+                                <span class="trn" data-trn="mirror">Mirror</span>
+                            </button>
+                            
+                            <button class="tool-btn" onclick="makeRay(this)">
+                                <i class="fas fa-asterisk"></i>
+                                <span class="trn" data-trn="ray">Ray</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        
     </div>
+    
     <canvas id="canvas"></canvas>
     
     <script src="js/jquery-3.3.1.min.js"></script>
     <script src="js/bootstrap.bundle.min.js"></script>
     <script src="js/paper-full.min.js"></script>
-
-    <script src="js/app/obj/Ray.js"></script>
+    
+    <script src="js/translation.js"></script>
     <script src="js/app/main.js"></script>
+    
+    <script>
+        // Language detection
+        let lang = window.navigator.language;
+        
+        // Translation
+        $(".trn").translate(lang);
+        $("#lang-select").val(lang);
+        
+        // Language selection menu
+        $("#lang-form").change(() => {
+            lang = $("#lang-select").val();
+            $(".trn").translate(lang);
+        });
+        
+        function makeMirror(that){
+            if($(that).hasClass("active")) return;
+            
+            $(that).addClass("active");
+            $(App.canvas).one("click", (event) => {
+                App.addMirror(event.offsetX, event.offsetY-50, event.offsetX, event.offsetY+50);
+                $(that).removeClass("active");
+            });
+        }
+        
+        function makeRay(that){
+            if($(that).hasClass("active")) return;
+            
+            $(that).addClass("active");
+            $(App.canvas).one("click", (event) => {
+                App.addRay(event.offsetX, event.offsetY);
+                $(that).removeClass("active");
+            });
+        }
+    </script>
 </body>
 </html>

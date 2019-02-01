@@ -9,3 +9,127 @@ canvas{
     height: 100%;
     transition: all .25s;
 }
+
+/*=================*/
+
+.bg-none{
+    background: none;
+}
+
+/*=================*/
+
+#panel{
+    width: 100%;
+    
+    background-color: var(--dark);
+    color: var(--light);
+    padding: 8px;
+}
+
+#bar{
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--secondary);
+}
+
+#header{
+    display: flex;
+    align-items: center;
+}
+
+#header h1{
+    font-size: 200%;
+    margin: 0 16px;
+    color: var(--white);
+}
+
+#header h2{
+    font-size: 100%;
+    margin: 0;
+    color: var(--light);
+}
+
+#toolbar{
+    margin-top: 16px;
+    display: flex;
+    justify-content: space-between;
+}
+
+#toolbar h3{
+    font-size: 125%;
+    margin-left: -8px;
+}
+
+#toolbar .sector{
+    display: inline-block;
+    padding: 2px 16px;
+}
+
+.toolbar-d{ /* toolbar-divider */
+    border-left: 1px solid var(--secondary);
+}
+
+#tools-dropdown{
+    border: 0;
+    background: none;
+    padding: 8px 8px 0;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#tools-dropdown::after{
+    display: inline-block;
+    font-style: normal;
+    font-variant: normal;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    font-family: "Font Awesome 5 Free"; 
+    font-weight: 900; 
+    content: "\f106";
+}
+
+#tools-dropdown.collapsed::after{
+    content: "\f107";
+}
+
+/*=================*/
+
+#tools-wrap{
+    position: absolute;
+    right: -16px !important;
+    top: 100% !important;
+    left: auto !important;
+    transform: none !important;
+}
+
+#tools{   
+    display: flex;
+    flex-direction: column;
+    margin-top: 16px;
+}
+
+.tool-btn{
+    border: 0;
+    border-radius: 2px;
+    background: rgba(192, 192, 192, .8);
+    padding: 8px;
+    cursor: pointer;
+    
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    color: var(--white);
+    margin: 2px;
+    text-shadow: 1px 1px 0 var(--gray);
+}
+
+.tool-btn.active{
+    background: rgba(16, 127, 192, .8);
+    cursor: not-allowed;
+}
+
+.tool-btn i{
+    font-size: 200%;
+}
+
