@@ -133,11 +133,22 @@ class Mirror extends Path {
 
         this.angle = Angle.calculateFor2Points(x1, y1, x2, y2);
         this.data.movable = true;
+    }
 
-        this.point = {
-            start: {x: x1, y: y1},
-            end: {x: x2, y: y2}
-        }
+    getX1() {
+        return this.getSegments()[0].point.x;
+    }
+
+    getY1() {
+        return this.getSegments()[0].point.y;
+    }
+
+    getX2() {
+        return this.getSegments()[1].point.x;
+    }
+
+    getY2() {
+        return this.getSegments()[1].point.y;
     }
 
     static create(x1, y1, x2, y2) {
@@ -198,12 +209,12 @@ const Angle = {
              ? (intersectionPoint.y - o1.point.start.y) / (intersectionPoint.x - o1.point.start.x)
              : (o1.point.start.y - intersectionPoint.y) / (o1.point.start.x - intersectionPoint.x)
         ;
-        if((o2.point.start.x == o2.point.end.x) || false) {
+        if((o2.getX1() == o2.getX2()) || false) {
             m2 = null;
         } else {
-            m2 = o2.point.start.x > o2.point.end.x
-                ? (o2.point.end.y - o2.point.start.y) / (o2.point.end.x - o2.point.start.x)
-                : (o2.point.start.y - o2.point.end.y) / (o2.point.start.x - o2.point.end.x)
+            m2 = o2.getX1() > o2.getX2()
+                ? (o2.getY2() - o2.getY1()) / (o2.getX2() - o2.getX1())
+                : (o2.getY1() - o2.getY2()) / (o2.getX1() - o2.getX2())
             ;
         }
         let o2perpslope = -1 * m2;
@@ -368,6 +379,8 @@ const App = {
                 let path = hitResult.item;
 
                 if(path.data.movable === true){
+                    console.log(path);
+
                     if(this.selectionRectangle && !path.parent.children["selection rectangle"]) this.selectionRectangle.remove();
                     var b = path.bounds.clone().expand(10, 10);
 
