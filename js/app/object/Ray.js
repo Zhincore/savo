@@ -5,7 +5,7 @@ class Ray extends Path {
         //correcting variables
         x = round(x, App.config.precision);
         y = round(y, App.config.precision);
-        angle = round(angle % 360, App.config.precision);
+        angle = round(angle % 360, App.config.anglePrecision);
 
         this.angle = angle;
 
@@ -38,7 +38,7 @@ class Ray extends Path {
 
         let start = new Point(ray.point.start.x, ray.point.start.y);
         ray.moveTo(start);
-        ray.lineTo(start.clone().add([ 1000, 0 ]).rotate(ray.angle, start));
+        ray.lineTo(start.clone().add([ App.config.rayLength, 0 ]).rotate(ray.angle, start));
 
         return ray;
     }

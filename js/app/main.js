@@ -26,7 +26,9 @@ const App = {
         iteration: 25,
         fps: 25,
         debug: true,
-        precision: 2
+        precision: 2,
+        anglePrecision: 0,
+        rayLength: 1000
     },
 
     debug: function(x,y,content) {
@@ -37,7 +39,33 @@ const App = {
         text.content = content;
     },
 
+    updateConfig: function(data) {
+        if(data.debug === undefined) {
+            this.config.debug = false;
+        } else {
+            this.config.debug = true;
+            delete data.debug;
+        }
+
+        for(let config in data) {
+            this.config[config] = data[config];
+        }
+    },
+
+    registerEvents: function() {
+        $("#config").on('change input', function() {
+            let data = $(this).serializeArray().reduce(function(obj, item) {
+                obj[item.name] = item.value;
+                return obj;
+            }, {});
+
+            App.updateConfig(data);
+        }).trigger('change');
+    },
+
     init: function() {
+        this.registerEvents();
+
         this.canvas.width = $(window).width();
         this.canvas.height = $(window).height();
 
@@ -177,9 +205,7 @@ const App = {
     },
 
     draw: function(){
-        if(this.config.debug) {
-            this.debugs.forEach((debug) => { debug.remove() });
-        }
+        this.debugs.forEach((debug) => { debug.remove() });
 
         this.rays.forEach((ray) => { ray.remove(); });
         this.rays = [];
@@ -237,7 +263,7 @@ const App = {
                 let intersections = ray.getIntersections(object);
                 let intersection = intersections[intersections.length-1];
 
-                let reflectionAngle = Angle.calculateAbsoluteAngleForObjects(ray, object, intersection.point);
+                let reflectionAngle = Angle.calculateAbsoluteReflectionAngleForObjects(ray, object, intersection.point);
                 // console.log(reflectionAngle);
 // console.log(intersection.point, ray.angle, reflectionAngle);
                 //                                                        180 reflect + reflection angle
@@ -299,7 +325,7 @@ const Angle = {
         let b = Math.abs(y2 - y1);
         let c = Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
 
-        return round(Math.degrees(Math.asin(b/c)), 4);
+        return Math.degrees(Math.asin(b/c));
     },
 
     /**
@@ -310,18 +336,17 @@ const Angle = {
      * @param Point intersectionPoint
      * @returns 0-360 degree
      */
-    calculateAbsoluteAngleForObjects: function(o1, o2, intersectionPoint) {
+    calculateAbsoluteReflectionAngleForObjects: function(o1, o2, intersectionPoint) {
         v1 = o1.getVector(intersectionPoint);
         v2 = o2.getPerpendicularVector().multiply(-1).normalize();
 
         // r=d−2(d⋅n)n, n normalized
         vr = v1.subtract(v2.multiply(v1.dot(v2) * 2));
-        angleOfReflection = round(vr.angle, App.config.precision);
 
         // this theoretically variable that should determine on which side of mirror the ray start is, although i doubt if it works + it doesnt seem to be needed
         // d = (o1.point.start.x - o2.getX2()) * (o2.getY2() - o2.getY1()) - (o1.point.start.y - o2.getY1()) * (o2.getX2() - o2.getX1());
 
-        return angleOfReflection;
+        return vr.angle;
     }
 };
 

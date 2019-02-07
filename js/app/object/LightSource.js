@@ -5,7 +5,7 @@ class LightSource extends Group {
         //correcting variables
         x = round(x, App.config.precision);
         y = round(y, App.config.precision);
-        angle = round(angle % 360, App.config.precision);
+        angle = round(angle % 360, App.config.anglePrecision);
 
         this.angle = angle;
         this.size = size;
