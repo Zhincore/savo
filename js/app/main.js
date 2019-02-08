@@ -126,8 +126,14 @@ const App = {
         //createLen(canvas.width/3*2, canvas.height/3*2);
 
         this.sources.push(
-            LightSource.create(100, 100, "#F00", 0, 4),
-            LightSource.create(this.canvas.width - 100, 100, "#00F", 150, 4)
+            LightSource.create(new Point(100, 100), 0, {
+                color: "#F00",
+                lightness: 4
+            }),
+            LightSource.create(new Point(this.canvas.width - 100, 100), 150, {
+                color: "#00F",
+                lightness: 4
+            })
         );
 
         //
@@ -271,7 +277,7 @@ const App = {
 
                 var vector = intersections[i].point.subtract(ray.segments[ray.segments.length-2].point);
 
-                if(vector.length < closest || closest == null){
+                if(vector.length > 1 / (10 * App.config.precision) && (vector.length < closest || closest == null)){
                     closest = vector.length;
                     closestCollision = mirror;
                 }
@@ -293,7 +299,6 @@ const App = {
                 let reflectionAngle = Angle.calculateAbsoluteReflectionAngleForObjects(ray, object, intersection.point);
                 // console.log(reflectionAngle);
 // console.log(intersection.point, ray.angle, reflectionAngle);
-                //                                                        180 reflect + reflection angle
                 this.rays.push(ray.reflectOnPoint(intersection.point, reflectionAngle));
                 break;
             case "len":
@@ -308,6 +313,16 @@ const App = {
 
     addRay: function(x1, y1) {
         this.sources.push(LightSource.create(x1, y1, "#FFF", 0, 4));
+    },
+
+    normalizeCoords: function(point) {
+        point.x = round(point.x, this.config.precision);
+        point.y = round(point.y, this.config.precision);
+        return point;
+    },
+
+    normalizeAngle: function(angle) {
+        return round(angle % 360, this.config.anglePrecision);
     }
 };
 
