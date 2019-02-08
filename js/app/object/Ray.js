@@ -1,44 +1,41 @@
 class Ray extends Path {
-    constructor(x, y, color, angle, lightness) {
+    constructor(position, angle = 0, config = {}) {
         super();
 
         //correcting variables
-        x = round(x, App.config.precision);
-        y = round(y, App.config.precision);
-        angle = round(angle % 360, App.config.anglePrecision);
 
-        this.angle = angle;
+
+        this.angle = App.normalizeAngle(angle);
 
         this.point = {
-            start: new Point(x, y),
+            start: App.normalizeCoords(position),
             end: undefined
         }
 
-
         this.config = {
-            color: color,
-            lightness: lightness
+            color: config.color !== undefined ? config.color : '#fff',
+            lightness: config.lightness !== undefined ? config.lightness : 1,
+            power: config.power !== undefined ? config.power : App.config.rayLength
         }
 
         if(App.config.debug) {
-            App.debug(x,y - 30,`(x: ${x}, y: ${y}, ${angle}°)`);
+            App.debug(this.point.start.x, this.point.start.y - 30,`(x: ${this.point.start.x}, y: ${this.point.start.y}, ${this.angle}°)`);
         }
     }
 
-    static create(x, y, color="white", angle=0, lightness=2) {
-        const ray = new this(x, y, color, angle, lightness);
+    static create(position, angle, config = {}) {
+        const ray = new this(position, angle, config);
 
-        ray.strokeColor = color;
+        ray.strokeColor = ray.config.color;
         ray.strokeWidth = 2;
         ray.strokeCap = 'butt';
         ray.strokeJoin = 'bevel';
-        ray.shadowColor = color;
-        ray.shadowBlur = lightness;
+        ray.shadowColor = ray.config.color;
+        ray.shadowBlur = ray.config.lightness;
         ray.sendToBack();
 
-        let start = new Point(ray.point.start.x, ray.point.start.y);
-        ray.moveTo(start);
-        ray.lineTo(start.clone().add([ App.config.rayLength, 0 ]).rotate(ray.angle, start));
+        ray.moveTo(ray.point.start);
+        ray.lineTo(ray.point.start.clone().add([ ray.config.power, 0 ]).rotate(ray.angle, ray.point.start));
 
         return ray;
     }
@@ -46,7 +43,9 @@ class Ray extends Path {
     reflectOnPoint(point, angle) {
         this.endOnPoint(point);
 
-        return Ray.create(point.x, point.y, this.config.color, angle, this.lightness);
+        return Ray.create(point, angle, Object.assign(this.config, {
+            power: this.getRemainingPower()
+        }));
     }
 
     endOnPoint(point) {
@@ -55,12 +54,16 @@ class Ray extends Path {
 
     endOnCoors(x, y) {
         this.removeSegment(this.lastSegment.index);
-        this.point.end = new Point(x, y);
+        this.point.end = App.normalizeCoords(new Point(x, y));
 
-        this.lineTo(x, y);
+        this.lineTo(this.point.end.x, this.point.end.y);
     }
 
     getVector(toPoint) {
         return toPoint.subtract(this.point.start);
+    }
+
+    getRemainingPower() {
+        return round(this.config.power - this.length, App.config.precision);
     }
 }
