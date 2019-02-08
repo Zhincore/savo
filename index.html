@@ -41,7 +41,22 @@
                             <div class="row">
                                 <label class="col-sm-4 col-form-label-sm"><span class="trn" data-trn="color">Color</span></label> 
                                 <div class="col-sm-8">
-                                    <input class="form-control-sm" type="color" name="debug" checked="checked" />
+                                    <input class="form-control-sm" type="color" autocomplete="off" value="#00111f" name="color" />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <label class="col-sm-4 col-form-label-sm"><span class="trn" data-trn="material">Material</span></label>
+                                <div class="col-sm-8"> 
+                                    <select id="envMat" class="form-control-sm" autocomplete="off" name="material" onInput="$('#envRI').val(App.materialRI[$(this).val()])">
+                                        <option value="vacuum"><span class="trn" data-trn="vacuum">Vacuum</span></option>
+                                        <option value="water"><span class="trn" data-trn="vacuum">Water</span></option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <label class="col-sm-4 col-form-label-sm"><span class="trn" data-trn="ri">Refractive index</span></label> 
+                                <div class="col-sm-8">
+                                    <input id="envRI" class="form-control-sm" autocomplete="off" type="number" min="1" max="5" value="1.0" step="0.01" name="ri" />
                                 </div>
                             </div>
                         </form>
@@ -166,6 +181,12 @@
         
         // Language selection menu
         $("#lang-form").change(() => {
+            lang = $("#lang-select").val();
+            $(".trn").translate(lang);
+        });
+        
+        // Event
+        $(document).on("translate", () => {
             lang = $("#lang-select").val();
             $(".trn").translate(lang);
         });

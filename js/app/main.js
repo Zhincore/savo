@@ -32,6 +32,19 @@ const App = {
         anglePrecision: 0,
         rayLength: 1000
     },
+    
+    materialRI: {
+        vacuum:     1.00,
+        air:        1.00,
+        helium:     1.00,
+        hydrogen:   1.00,
+        ice:        1.31,
+        water:      1.33,
+        ethanol:    1.36,
+        glass:      1.52,
+        flintglass: 1.62,
+        diamond:    2.42
+    },
 
     debug: function(x,y,content) {
         const text = new PointText(new Point(x, y));
@@ -77,6 +90,16 @@ const App = {
 
         // Create an empty project and a view for the canvas:
         paper.setup(this.canvas);
+        
+        // Prepare toolbar config
+        $("#envMat").html(() => {
+            let html = "";
+            Object.keys(this.materialRI).forEach((mat) => {
+                html += "<option value="+mat+" class='trn' data-trn="+mat+"></option>"
+            });
+            return html;
+        });
+        $(document).trigger("translate");
 
         this.objects.push(
             // Mirror.create(600, 600, 700, 800),

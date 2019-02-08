@@ -48,6 +48,46 @@
             cs: "Přesnost",
             en: "Precision"
         },
+        "vacuum": {
+            cs: "Vakuum",
+            en: "Vacuum"
+        },
+        "air": {
+            cs: "Vzduch",
+            en: "Air"
+        },
+        "helium": {
+            cs: "Hélium",
+            en: "Helium"
+        },
+        "hydrogen": {
+            cs: "Vodík",
+            en: "Hydrogen"
+        },
+        "ice": {
+            cs: "Led",
+            en: "Ice"
+        },
+        "water": {
+            cs: "Voda",
+            en: "Water"
+        },
+        "ethanol": {
+            cs: "Ethanol",
+            en: "Ethanol"
+        },
+        "glass": {
+            cs: "Sklo",
+            en: "Glass"
+        },
+        "flintglass": {
+            cs: "Flintové sklo",
+            en: "Flint glass"
+        },
+        "diamond": {
+            cs: "Diamant",
+            en: "Diamond"
+        },
         "mirror": {
             cs: "Zrcadlo",
             en: "Mirror"
