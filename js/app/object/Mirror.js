@@ -1,8 +1,22 @@
 class Mirror extends Path {
-    constructor(x1, y1, x2, y2) {
+    static create(point1, point2) {
+        let group = new Group();
+        let mirror = new this(point1, point2);
+
+        mirror.strokeColor = '#affeff66';
+        mirror.strokeWidth = 4;
+        mirror.moveTo(point1.x, point1.y);
+        mirror.lineTo(point2.x, point2.y);
+        mirror.name = "mirror";
+
+        group.addChild(mirror);
+        return mirror;
+    }
+
+    constructor(point1, point2) {
         super();
 
-        this.angle = Angle.calculateFor2Points(x1, y1, x2, y2);
+        this.angle = Angle.calculateFor2Points(point1, point2);
         this.data.movable = true;
     }
 
@@ -28,20 +42,6 @@ class Mirror extends Path {
 
     getPoint2() {
         return new Point(this.getX2(), this.getY2());
-    }
-
-    static create(x1, y1, x2, y2) {
-        let group = new Group();
-        let mirror = new this(x1, y1, x2, y2);
-
-        mirror.strokeColor = '#affeff66';
-        mirror.strokeWidth = 4;
-        mirror.moveTo(x1, y1);
-        mirror.lineTo(x2, y2);
-        mirror.name = "mirror";
-
-        group.addChild(mirror);
-        return mirror;
     }
 
     rotate(angle){

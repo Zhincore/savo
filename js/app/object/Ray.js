@@ -18,10 +18,8 @@ class Ray extends Path {
             power: App.config.rayLength
         }, config);
 
-        console.log(this.config);
-
         if(App.config.debug) {
-            App.debug(this.point.start.x, this.point.start.y - 30,`(x: ${this.point.start.x}, y: ${this.point.start.y}, ${this.angle}°)`);
+            App.debug(this.point.start.x, this.point.start.y - 30, `(x: ${this.point.start.x}, y: ${this.point.start.y}, ${this.angle}°)`);
         }
     }
 

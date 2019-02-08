@@ -47,6 +47,10 @@ const App = {
         }
     },
 
+    updateConfig: function(data) {
+        this.config = Object.assign(this.config, data);
+    },
+
     registerEvents: function() {
         const formSlctr = "#config, #config-sm";
         
@@ -86,19 +90,23 @@ const App = {
             // Mirror.create(this.canvas.width/3*2-100, this.canvas.height/3*2 - 120, this.canvas.width/3*2-100-25, this.canvas.height/3*2 - 20),
 
             //horizontal mirrors
-            Mirror.create(400, 300, 500, 300),
-            Mirror.create(400, 310, 500, 310),
-            Mirror.create(400, 320, 500, 320),
+            Mirror.create(new Point(400, 300), new Point(500, 300)),
+            Mirror.create(new Point(400, 310), new Point(500, 310)),
+            Mirror.create(new Point(400, 320), new Point(500, 320)),
 
             //vertical mirrors
-            Mirror.create(400, 400, 400, 500),
-            Mirror.create(410, 400, 410, 500),
+            Mirror.create(new Point(400, 400), new Point(400, 500)),
+            Mirror.create(new Point(410, 400), new Point(410, 500)),
 
             //45* angled
-            Mirror.create(400, 400, 500, 500),
-            Mirror.create(500, 400, 400, 500),
-            Mirror.create(400, 400, 500, 500),
-            Mirror.create(500, 400, 400, 500)
+            Mirror.create(new Point(400, 400), new Point(500, 500)),
+            Mirror.create(new Point(500, 400), new Point(400, 500)),
+            Mirror.create(new Point(400, 400), new Point(500, 500)),
+            Mirror.create(new Point(500, 400), new Point(400, 500)),
+            Len.create(new Point(200, 200), 60, 60),
+            Len.create(new Point(200, 300), 60, 120),
+            Len.create(new Point(300, 200), 30, 120),
+            Len.create(new Point(200, 350), 70, 60)
         );
         //createLen(canvas.width/3*2, canvas.height/3*2);
 
@@ -285,7 +293,7 @@ const App = {
     },
 
     addMirror: function(x1, y1, x2, y2) {
-        this.objects.push(Mirror.create(x1, y1, x2, y2));
+        this.objects.push(Mirror.create(new Point(x1, y1), new Point(x2, y2)));
     },
 
     addRay: function(x1, y1) {
@@ -329,19 +337,17 @@ const testSuite = {
     },
 
     Angle_calculateForTwoPoints: function() {
-        this.assert(45, Angle.calculateFor2Points(0, 0, 10, 10));
-        this.assert(30, Angle.calculateFor2Points(0, 0, 4.3301, 2.5));
-        this.assert(26.5650, Angle.calculateFor2Points(0, 0, 6, 3));
-        this.assert(14.6208, Angle.calculateFor2Points(0, 0, 23, 6));
+        this.assert(45, Angle.calculateFor2Points(new Point(0, 0), new Point(10, 10)));
+        this.assert(30, Angle.calculateFor2Points(new Point(0, 0), new Point(4.3301, 2.5)));
+        this.assert(26.5650, Angle.calculateFor2Points(new Point(0, 0), new Point(6, 3)));
+        this.assert(14.6208, Angle.calculateFor2Points(new Point(0, 0), new Point(23, 6)));
     },
 }
 
 const Angle = {
-    calculateFor2Points: function (x1, y1, x2, y2) {
-        let q = 0;
-
-        let a = Math.abs(x2 - x1);
-        let b = Math.abs(y2 - y1);
+    calculateFor2Points: function (point1, point2) {
+        let a = Math.abs(point2.x - point1.x);
+        let b = Math.abs(point2.y - point1.y);
         let c = Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
 
         return Math.degrees(Math.asin(b/c));
@@ -350,17 +356,17 @@ const Angle = {
     /**
      * Returns absolute angle of reflection for two objects and point of intersection (tilt angle to X axis)
      *
-     * @param Ray o1
-     * @param Mirror o2
-     * @param Point intersectionPoint
-     * @returns 0-360 degree
+     * @param o1 Ray
+     * @param o2 Mirror
+     * @param intersectionPoint Point
+     * @returns int 0-359 degrees
      */
     calculateAbsoluteReflectionAngleForObjects: function(o1, o2, intersectionPoint) {
-        v1 = o1.getVector(intersectionPoint);
-        v2 = o2.getPerpendicularVector().multiply(-1).normalize();
+        let v1 = o1.getVector(intersectionPoint);
+        let v2 = o2.getPerpendicularVector().multiply(-1).normalize();
 
         // r=d−2(d⋅n)n, n normalized
-        vr = v1.subtract(v2.multiply(v1.dot(v2) * 2));
+        let vr = v1.subtract(v2.multiply(v1.dot(v2) * 2));
 
         // this theoretically variable that should determine on which side of mirror the ray start is, although i doubt if it works + it doesnt seem to be needed
         // d = (o1.point.start.x - o2.getX2()) * (o2.getY2() - o2.getY1()) - (o1.point.start.y - o2.getY1()) * (o2.getX2() - o2.getX1());
