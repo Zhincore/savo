@@ -17,61 +17,129 @@
                 <h2 class="trn" data-trn="*headerline">Simulátor a Vizualizátor Optiky</h2>
             </hgroup>
             
-            <form class="form form-inline" id="lang-form" action="">
+            
+            <form class="form form-inline" id="lang-form" action="" onSubmit="event.preventDefault()">
                 <label for="lang-select"><i class="fas fa-language fa-lg"></i>&nbsp;</label>
                 <select id="lang-select">
                     <option value="cs">CZ</option>
                     <option value="en">EN</option>
                 </select>
+                <div>
+                    <button class="exp-button border-0" data-toggle="collapse" data-target="#toolbarWrap">
+                        <span class="trn" data-trn="toolbar">Toolbar</span> 
+                    </button>
+                </div>
             </form>
         </div>
         
-        <div id="toolbar">
-            <div class="sector">
-                <h3><i class="fas fa-tree"></i> <span class="trn" data-trn="enviroment">Enviroment</span></h3>
-                <div>
-                    <form id="config">
-                        <label><input type="checkbox" name="debug" checked="checked" /> Debug</label>
-                        <label><input type="range" min="100" max="1500" step="100" value="1000" name="rayLength" /> Ray length</label>
-                        <label><input type="number" min="1" max="144" value="25" name="fps" /> FPS</label>
-                        <label><input type="number" min="1" max="50" value="15" name="iteration" /> Iterations</label>
-                        <label><input type="number" min="0" max="5" value="4" name="precision" /> Precision</label>
-                    </form>
-                </div>
-            </div>
-            
-            <div class="sector toolbar-d">
-                <h3>Sum more</h3>
-                <span class="text-muted">TODO: Maybe settings of currently selected element (changing ray color, lens D, RI etc.)</span>
-            </div>
-            
-            <div class="sector toolbar-d">
-                <button class="btn btn-primary trn" data-trn="recalculate">Recalculate</button>
-                
-                <div class="dropdown">
-                    <button id="tools-dropdown" class="w-100 collapsed" data-toggle="collapse" data-target="#tools-wrap"><span class="trn" data-trn="tools">Tools</span> </button>
-                    <div class="collapse" id="tools-wrap">
-                        <div id="tools">
-                            <button class="tool-btn" onclick="makeMirror(this)">
-                                <i class="far fa-square"></i>
-                                <span class="trn" data-trn="mirror">Mirror</span>
-                            </button>
-                            
-                            <button class="tool-btn" onclick="makeRay(this)">
-                                <i class="fas fa-asterisk"></i>
-                                <span class="trn" data-trn="ray">Ray</span>
-                            </button>
-                        </div>
+        <div id="toolbarWrap" class="collapse show">
+            <div id="toolbar">
+                <div class="sector">
+                    <h3><i class="fas fa-tree"></i> <span class="trn" data-trn="enviroment">Enviroment</span></h3>
+                    <div>
+                        <form id="enviromentConfig">
+                            <div class="row">
+                                <label class="col-sm-4 col-form-label-sm"><span class="trn" data-trn="color">Color</span></label> 
+                                <div class="col-sm-8">
+                                    <input class="form-control-sm" type="color" name="debug" checked="checked" />
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
                 
+                <div class="sector toolbar-d">
+                    <h3>Sum more</h3>
+                    <span class="text-muted">TODO: Maybe settings of currently selected element (changing ray color, lens D, RI etc.)</span>
+                </div>
+                
+                <div class="sector toolbar-d">
+                    <h3><i class="fas fa-image"></i> <span>Render</span></h3>
+                    
+                    <div class="text-center">
+                        <button class="btn btn-primary trn" data-trn="recalculate" onClick="App.update()">Recalculate</button>
+                        
+                        <form id="config-sm" class="form-inline justify-content-center">
+                            <label for="configAuto"><span class="trn" data-trn="autoUpdate">Auto-recalculate</span></label>
+                            <input id="configAuto" class="mx-2 form-control" type="checkbox" name="autoUpdate" checked="checked" />
+                        </form>
+                    </div>
+                    
+                    <button class="collapsed exp-button" data-toggle="collapse" data-target="#configWrap" style="min-width: 275px;">
+                        <span class="trn" data-trn="advanced">Advanced</span> 
+                    </button>
+                    
+                    <div id="configWrap" class="collapse" style="width: 275px;">
+                        <form id="config">
+                            <div class="row">
+                                <label class="col-sm-4 col-form-label-sm"><span class="trn" data-trn="debug">Debug</span></label> 
+                                <div class="col-sm-8">
+                                    <input class="form-control-sm" type="checkbox" name="debug" checked="checked" />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <label class="col-sm-5 col-form-label-sm"><span class="trn" data-trn="rayLength">Ray length</span></label> 
+                                <div class="col-sm-7">
+                                    <div class="row m-0 p-0">
+                                        <div class="col-sm-9 p-0">
+                                            <input class="custom-range form-control-sm" type="range" min="100" max="1500" step="100" value="1000" name="rayLength" onInput="$('#rayLength-d').text($(this).val())"/>
+                                        </div>
+                                        <div class="col-sm-3 p-0">
+                                            <span id="rayLength-d">1000</span>px
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <label class="col-sm-4 col-form-label-sm"><span class="trn" data-trn="fps">FPS</span></label> 
+                                <div class="col-sm-8">
+                                    <input class="w-100" type="number" min="1" max="144" value="25" name="fps" />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <label class="col-sm-4 col-form-label-sm"><span class="trn" data-trn="iteration">Iterations</span></label>
+                                <div class="col-sm-8"> 
+                                    <input class="w-100" type="number" min="1" max="50" value="15" name="iteration" />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <label class="col-sm-4 col-form-label-sm"><span class="trn" data-trn="precision">Precision</span></label> 
+                                <div class="col-sm-8">
+                                    <input class="w-100" type="number" min="0" max="5" value="4" name="precision" />
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    
+                    <div class="dropdown">
+                        <button class="exp-button collapsed" data-toggle="collapse" data-target="#tools-wrap">
+                            <span class="trn" data-trn="tools">Tools</span> 
+                        </button>
+                        
+                        <div class="collapse" id="tools-wrap">
+                            <div id="tools">
+                                <button class="tool-btn" onclick="makeMirror(this)">
+                                    <i class="far fa-square"></i>
+                                    <span class="trn" data-trn="mirror">Mirror</span>
+                                </button>
+                                
+                                <button class="tool-btn" onclick="makeRay(this)">
+                                    <i class="fas fa-asterisk"></i>
+                                    <span class="trn" data-trn="ray">Ray</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
             </div>
         </div>
-        
     </div>
     
     <canvas id="canvas"></canvas>
     
+    <!-- Libs -->
     <script src="js/jquery-3.3.1.min.js"></script>
     <script src="js/bootstrap.bundle.min.js"></script>
     <script src="js/paper-full.min.js"></script>
@@ -80,12 +148,14 @@
         paper.install(window);
     </script>
     
-    <script src="js/translation.js"></script>
+    <!-- App -->
     <script src="js/app/object/Ray.js"></script>
     <script src="js/app/object/LightSource.js"></script>
     <script src="js/app/object/Mirror.js"></script>
     <script src="js/app/main.js"></script>
-
+    
+    <!-- Other -->
+    <script src="js/translation.js"></script>
     <script>
         // Language detection
         let lang = window.navigator.language;
