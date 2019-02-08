@@ -10,11 +10,10 @@ class LightSource extends Group {
         this.angle = angle;
         this.size = config.size !== undefined ? config.size : 20;
 
-        this.config = {
-            color: config.color !== undefined ? config.color : '#fff',
-            lightness: config.lightness !== undefined ? config.lightness : 1,
-            power: config.power //if it's undefined, then first fired ray will have App.config.rayLength power by default
-        }
+        this.config = Object.assign({
+            color: '#fff',
+            lightness: 1,
+        }, config);
     }
 
     static create(position, angle, config) {
@@ -33,7 +32,7 @@ class LightSource extends Group {
     }
 
     fire() {
-        return Ray.create(this.position, this.angle, this.config);
+        return Ray.create(this.object.position, this.angle, this.config);
     }
 
     rotate(angle){

@@ -1,5 +1,5 @@
 class Ray extends Path {
-    constructor(position, angle = 0, config = {}) {
+    constructor(position, angle = 0, config) {
         super();
 
         //correcting variables
@@ -10,13 +10,15 @@ class Ray extends Path {
         this.point = {
             start: App.normalizeCoords(position),
             end: undefined
-        }
+        };
 
-        this.config = {
-            color: config.color !== undefined ? config.color : '#fff',
-            lightness: config.lightness !== undefined ? config.lightness : 1,
-            power: config.power !== undefined ? config.power : App.config.rayLength
-        }
+        this.config = Object.assign({
+            color: '#fff',
+            lightness: 1,
+            power: App.config.rayLength
+        }, config);
+
+        console.log(this.config);
 
         if(App.config.debug) {
             App.debug(this.point.start.x, this.point.start.y - 30,`(x: ${this.point.start.x}, y: ${this.point.start.y}, ${this.angle}°)`);
