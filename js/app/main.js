@@ -59,6 +59,13 @@ const App = {
             this.config[config] = data[config];
         }
     },
+    
+    updateEnvConfig: function(data) {
+        for(let config in data) {
+            this.config.enviroment[config] = data[config];
+        }
+        $(this.canvas).css("backgroundColor", this.config.enviroment.color);
+    },
 
     registerEvents: function() {
         const formSlctr = "#config, #config-sm";
@@ -77,6 +84,22 @@ const App = {
             }, {});
 
             App.updateConfig(data);
+        }).trigger('change');
+        
+        $("#enviromentConfig").on('change input', function() {
+            let data = $(this).serializeArray()
+                // fix checkboxes 
+                .concat(jQuery('input[type=checkbox]:not(:checked)', formSlctr).map(
+                    function() {
+                        return {"name": this.name, "value": false}
+                    }).get()
+                // process
+                ).reduce(function(obj, item) {
+                    obj[item.name] = item.value;
+                    return obj;
+            }, {});
+
+            App.updateEnvConfig(data);
         }).trigger('change');
     },
 
