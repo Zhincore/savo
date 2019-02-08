@@ -20,12 +20,14 @@ const App = {
             fill: true,
             tolerance: 10
         },
-        environment: {
+        enviroment: {
             RI: 1,
+            color: "#00111f",
         },
         iteration: 25,
         fps: 25,
         debug: true,
+        autoUpdate: true,
         precision: 2,
         anglePrecision: 0,
         rayLength: 1000
@@ -40,23 +42,25 @@ const App = {
     },
 
     updateConfig: function(data) {
-        if(data.debug === undefined) {
-            this.config.debug = false;
-        } else {
-            this.config.debug = true;
-            delete data.debug;
-        }
-
         for(let config in data) {
             this.config[config] = data[config];
         }
     },
 
     registerEvents: function() {
-        $("#config").on('change input', function() {
-            let data = $(this).serializeArray().reduce(function(obj, item) {
-                obj[item.name] = item.value;
-                return obj;
+        const formSlctr = "#config, #config-sm";
+        
+        $(formSlctr).on('change input', function() {
+            let data = $(this).serializeArray()
+                // fix checkboxes 
+                .concat(jQuery('input[type=checkbox]:not(:checked)', formSlctr).map(
+                    function() {
+                        return {"name": this.name, "value": false}
+                    }).get()
+                // process
+                ).reduce(function(obj, item) {
+                    obj[item.name] = item.value;
+                    return obj;
             }, {});
 
             App.updateConfig(data);
@@ -69,7 +73,7 @@ const App = {
         this.canvas.width = $(window).width();
         this.canvas.height = $(window).height();
 
-        $(this.canvas).css("backgroundColor", "#00111f");
+        $(this.canvas).css("backgroundColor", this.config.enviroment.color);
 
         // Create an empty project and a view for the canvas:
         paper.setup(this.canvas);
@@ -207,7 +211,7 @@ const App = {
         }
 
         this.needsUpdate = false;
-        setTimeout(() => { App.needsUpdate = true; }, 1000 / App.config.fps);
+        if(this.config.autoUpdate) setTimeout(() => { App.needsUpdate = true; }, 1000 / App.config.fps);
     },
 
     draw: function(){
