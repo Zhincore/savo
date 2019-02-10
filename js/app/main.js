@@ -311,6 +311,10 @@ const App = {
                 let RI = getKeyByValue(this.materialRI, obj.config.RI);
             }
             
+            // Remove previous handlers
+            form.find("input").off("change input");
+            
+            // Add new handlers
             form.find("input[name='color']").on("change input", (ev) => {
                 console.log(ev)
                 obj.config.color = mesh.fillColor = $(ev.target).val();
