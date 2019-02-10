@@ -7,7 +7,8 @@ class Mirror extends Path {
         mirror.strokeWidth = 4;
         mirror.moveTo(point1.x, point1.y);
         mirror.lineTo(point2.x, point2.y);
-        mirror.name = "mirror";
+        mirror.data.type = "mirror";
+        mirror.name = "mesh";
 
         group.addChild(mirror);
         return mirror;
@@ -20,28 +21,12 @@ class Mirror extends Path {
         this.data.movable = true;
     }
 
-    getX1() {
-        return this.getSegments()[0].point.x;
-    }
-
-    getY1() {
-        return this.getSegments()[0].point.y;
-    }
-
-    getX2() {
-        return this.getSegments()[1].point.x;
-    }
-
-    getY2() {
-        return this.getSegments()[1].point.y;
-    }
-
     getPoint1() {
-        return new Point(this.getX1(), this.getY1());
+        return this.getSegments()[0];
     }
 
     getPoint2() {
-        return new Point(this.getX2(), this.getY2());
+        return this.getSegments()[1];
     }
 
     rotate(angle){

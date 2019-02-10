@@ -18,7 +18,7 @@ const App = {
             segments: true,
             stroke: true,
             fill: true,
-            tolerance: 10
+            tolerance: 5
         },
         enviroment: {
             RI: 1,
@@ -32,6 +32,19 @@ const App = {
         anglePrecision: 0,
         rayLength: 1000
     },
+    
+    materialRI: {
+        vacuum:     1.00,
+        air:        1.00,
+        helium:     1.00,
+        hydrogen:   1.00,
+        ice:        1.31,
+        water:      1.33,
+        ethanol:    1.36,
+        glass:      1.52,
+        flintglass: 1.62,
+        diamond:    2.42
+    },
 
     debug: function(x,y,content) {
         const text = new PointText(new Point(x, y));
@@ -42,9 +55,9 @@ const App = {
     },
 
     updateConfig: function(data) {
-        for(let config in data) {
-            this.config[config] = data[config];
-        }
+        this.config = Object.assign(this.config, data);
+        $(canvas).css("backgroundColor", this.config.enviroment.color)
+        $(canvas).trigger("changed");
     },
 
     updateConfig: function(data) {
@@ -69,6 +82,28 @@ const App = {
 
             App.updateConfig(data);
         }).trigger('change');
+        
+        $("#enviromentConfig").on('change input', function() {
+            let data = $(this).serializeArray()
+                // fix checkboxes 
+                .concat(jQuery('input[type=checkbox]:not(:checked)', formSlctr).map(
+                    function() {
+                        return {"name": this.name, "value": false}
+                    }).get()
+                // process
+                ).reduce(function(obj, item) {
+                    obj[item.name] = item.value;
+                    return obj;
+            }, {});
+            
+            App.updateConfig({enviroment: data});
+        }).trigger('change');
+        
+        $(canvas).on("changed", () => {
+            if(App.config.autoUpdate){
+                App.needsUpdate = true;
+            }
+        });
     },
 
     init: function() {
@@ -81,6 +116,16 @@ const App = {
 
         // Create an empty project and a view for the canvas:
         paper.setup(this.canvas);
+        
+        // Prepare toolbar config
+        $(".matSelect").html(() => {
+            let html = "";
+            Object.keys(this.materialRI).forEach((mat) => {
+                html += "<option value="+mat+" class='trn' data-trn="+mat+"></option>"
+            });
+            return html;
+        });
+        $(document).trigger("translate");
 
         this.objects.push(
             // Mirror.create(600, 600, 700, 800),
@@ -112,11 +157,11 @@ const App = {
 
         this.sources.push(
             LightSource.create(new Point(100, 100), 0, {
-                color: "#F00",
+                color: "#FF0000",
                 lightness: 4
             }),
             LightSource.create(new Point(this.canvas.width - 100, 100), 150, {
-                color: "#00F",
+                color: "#0000FF",
                 lightness: 4
             })
         );
@@ -152,10 +197,13 @@ const App = {
                     this.selectionRectangle.selected = true;
 
                     path.parent.addChild(this.selectionRectangle);
+                    this.createObjOptions();
                 }
             }else{
                 if(this.selectionRectangle !== null)
                     this.selectionRectangle.remove();
+                    this.selectionRectangle = null;
+                    this.createObjOptions();
             }
         };
 
@@ -164,17 +212,23 @@ const App = {
             let path = hitResult ? hitResult.item : null;
 
             if(this.dragged && (this.selectionRectangle !== null && this.dragged.name === "selection rectangle")){
+                let obj = this.selectionRectangle.parent;
+                let center = obj.children["mesh"].bounds.center;
+                
                 if(this.rotating){//rotate
-                    this.selectionRectangle.parent.rotate(event.point.x - this.rotating.x);
+                    let angle = obj.bounds.center.subtract(this.rotating).getDirectedAngle(obj.bounds.center.subtract(event.point));
+                    obj.rotate(angle, center);
                     this.rotating = event.point;
 
                 }else if(this.scaling){//scale
-                    this.selectionRectangle.parent.scaling.set(this.selectionRectangle.parent.scaling.x + ((event.point.x - this.scaling.x) / 100));
+                    obj.scale((event.point.subtract(obj.bounds.center).length - this.scaling.subtract(obj.bounds.center).length) / 100 + 1, center);
+                    console.log(event.point.subtract(obj.bounds.center).length - this.scaling.subtract(obj.bounds.center).length)
                     this.scaling = event.point;
 
                 }else{//drag
-                    this.selectionRectangle.parent.position = event.point;
+                    obj.position = event.point;
                 }
+                $(canvas).trigger("changed");
 
             }else if(path && this.selectionRectangle !== null && path.name === "selection rectangle"){
                 this.dragged = path;
@@ -182,7 +236,7 @@ const App = {
                 if(hitResult.type === 'segment' && this.selectionRectangle !== null && path.name === "selection rectangle"){
                     if(hitResult.segment.index >= 2 && hitResult.segment.index <= 4){
                         // rotation
-                        this.rotating = event.point;
+                        this.rotating = {point: event.point, last: 0};
                     }else{
                         // scaling
                         this.scaling = event.point;
@@ -219,7 +273,7 @@ const App = {
         }
 
         this.needsUpdate = false;
-        if(this.config.autoUpdate) setTimeout(() => { App.needsUpdate = true; }, 1000 / App.config.fps);
+        //if(this.config.autoUpdate) setTimeout(() => { App.needsUpdate = true; }, 1000 / App.config.fps);
     },
 
     draw: function(){
@@ -232,6 +286,58 @@ const App = {
         this.sources.forEach((source) => {
             this.rays.push(source.fire())
         });
+    },
+    
+    createObjOptions: function(){
+        const emptyMsg = $("#objEmptyMsg");
+        const form = $("#objectConfig");
+        
+        if(this.selectionRectangle !== null){
+
+            let obj = this.selectionRectangle.parent;
+            let mesh = obj.children["mesh"];
+            let type = mesh.data.type;
+            let isRay = type === "ray";
+            let isMirror = type === "mirror";
+            let isLen = type === "len";
+            
+            
+            emptyMsg.hide();
+            form.show();
+            
+            $("#objTypeH").show();
+            $("#objType").attr("data-trn", type);
+            form.find("input").val(0);
+            
+            form.children(".onlyRay").toggle(isRay);
+            form.children(".onlyMirror").toggle(isMirror);
+            form.children(".onlyLen").toggle(isLen);
+            
+            if(isRay){
+                form.find("input[name='color']").val(obj.config.color);
+            }else if(isLen){
+                let RI = getKeyByValue(this.materialRI, obj.config.RI);
+            }
+            
+            // Remove previous handlers
+            form.find("input").off("change input");
+            
+            // Add new handlers
+            form.find("input[name='color']").on("change input", (ev) => {
+                console.log(ev)
+                obj.config.color = mesh.fillColor = $(ev.target).val();
+                $(canvas).trigger("changed");
+            });
+            
+            $(document).trigger("translate");
+            
+        }else{
+            
+            emptyMsg.show();
+            $("#objTypeH").hide();
+            form.hide();
+            
+        }
     },
 
     calculateRay: function(ray) {
@@ -276,7 +382,7 @@ const App = {
         let end = new Point(App.canvas.width*2, 0);
 
         // do final calulation
-        switch(object.name){
+        switch(object.data.type){
             case "mirror":
                 let intersections = ray.getIntersections(object);
                 let intersection = intersections[intersections.length-1];
@@ -297,7 +403,10 @@ const App = {
     },
 
     addRay: function(x1, y1) {
-        this.sources.push(LightSource.create(x1, y1, "#FFF", 0, 4));
+        this.sources.push(LightSource.create(new Point(x1, y1), 0, {
+                color: "#FFFFFF",
+                lightness: 4
+            }));
     },
 
     normalizeCoords: function(point) {
@@ -380,6 +489,10 @@ function round(number, precision) {
     let tempNumber = number * factor;
     let roundedTempNumber = Math.round(tempNumber);
     return roundedTempNumber / factor;
+}
+
+function getKeyByValue(object, value) {
+  return Object.keys(object).find(key => object[key] === value);
 }
 
 /// ### createLen

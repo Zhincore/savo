@@ -9,7 +9,7 @@
     <title>SaVO - Simulátor a Vizualizátor Optiky</title>
 </head>
 <body>
-    <div id="panel">
+    <div id="panel" class="position-relative">
     
         <div id="bar">
             <hgroup id="header">
@@ -41,7 +41,22 @@
                             <div class="row">
                                 <label class="col-sm-4 col-form-label-sm"><span class="trn" data-trn="color">Color</span></label> 
                                 <div class="col-sm-8">
-                                    <input class="form-control-sm" type="color" name="debug" checked="checked" />
+                                    <input class="form-control-sm" type="color" autocomplete="off" value="#00111f" name="color" />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <label class="col-sm-4 col-form-label-sm"><span class="trn" data-trn="material">Material</span></label>
+                                <div class="col-sm-8"> 
+                                    <select id="envMat" class="matSelect form-control-sm" autocomplete="off" name="material" onInput="$('#envRI').val(App.materialRI[$(this).val()])">
+                                        <option value="vacuum"><span class="trn" data-trn="vacuum">Vacuum</span></option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <label class="col-sm-4 col-form-label-sm"><span class="trn" data-trn="ri">Refractive index</span></label> 
+                                <div class="col-sm-8">
+                                    <input id="envRI" class="form-control-sm" autocomplete="off" type="number" min="1" max="5" value="1.0" step="0.01" name="ri" />
+                                    <small class="text-muted trn d-block" data-trn="dpnd_on_mat">Dependent on material</small>
                                 </div>
                             </div>
                         </form>
@@ -49,8 +64,36 @@
                 </div>
                 
                 <div class="sector toolbar-d">
-                    <h3>Sum more</h3>
-                    <span class="text-muted">TODO: Maybe settings of currently selected element (changing ray color, lens D, RI etc.)</span>
+                    <hgroup>
+                        <h3 class="d-inline-block"><i class="fas fa-cube"></i> <span class="trn" data-trn="object">Object</span></h3> 
+                        <h4 id="objTypeH" style="display:none;"><span class="trn" data-trn="type">Type</span>: <span id="objType" class="trn" data-trn=""></span></h4>
+                    </hgroup>
+                                        
+                    <span id="objEmptyMsg" class="text-muted trn" data-trn="makeselection">Select an object to change it's settings.</span>
+                    
+                    <form id="objectConfig" style="display: none;">
+                        <div class="row onlyRay">
+                            <label class="col-sm-4 col-form-label-sm"><span class="trn" data-trn="color">Color</span></label> 
+                            <div class="col-sm-8">
+                                <input class="form-control-sm" type="color" autocomplete="off" value="#00111f" name="color" />
+                            </div>
+                        </div>
+                        <div class="row onlyLen">
+                            <label class="col-sm-4 col-form-label-sm"><span class="trn" data-trn="material">Material</span></label>
+                            <div class="col-sm-8"> 
+                                <select class="matSelect form-control-sm" autocomplete="off" name="material" onInput="$('#objRI').val(App.materialRI[$(this).val()])">
+                                    <option value="vacuum"><span class="trn" data-trn="vacuum">Vacuum</span></option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row onlyLen">
+                            <label class="col-sm-4 col-form-label-sm"><span class="trn" data-trn="ri">Refractive index</span></label> 
+                            <div class="col-sm-8">
+                                <input id="objRI" class="form-control-sm" autocomplete="off" type="number" min="1" max="5" value="1.0" step="0.01" name="ri" />
+                                <small class="text-muted trn d-block" data-trn="dpnd_on_mat">Dependent on material</small>
+                            </div>
+                        </div>
+                    </form>
                 </div>
                 
                 <div class="sector toolbar-d">
@@ -61,7 +104,7 @@
                         
                         <form id="config-sm" class="form-inline justify-content-center">
                             <label for="configAuto"><span class="trn" data-trn="autoUpdate">Auto-recalculate</span></label>
-                            <input id="configAuto" class="mx-2 form-control" type="checkbox" name="autoUpdate" checked="checked" />
+                            <input id="configAuto" class="mx-2 form-control" type="checkbox" name="autoUpdate" checked="checked" onChange="App.update()" />
                         </form>
                     </div>
                     
@@ -110,31 +153,33 @@
                             </div>
                         </form>
                     </div>
-                    
-                    
-                    <div class="dropdown">
-                        <button class="exp-button collapsed" data-toggle="collapse" data-target="#tools-wrap">
-                            <span class="trn" data-trn="tools">Tools</span> 
-                        </button>
-                        
-                        <div class="collapse" id="tools-wrap">
-                            <div id="tools">
-                                <button class="tool-btn" onclick="makeMirror(this)">
-                                    <i class="far fa-square"></i>
-                                    <span class="trn" data-trn="mirror">Mirror</span>
-                                </button>
-                                
-                                <button class="tool-btn" onclick="makeRay(this)">
-                                    <i class="fas fa-asterisk"></i>
-                                    <span class="trn" data-trn="ray">Ray</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
+                                        
                 </div>
             </div>
         </div>
+        
+        <div class="dropdown" id="tools-wrap">
+            <button class="exp-button" data-toggle="collapse" data-target="#tools-dropdown">
+                <span class="trn" data-trn="tools">Tools</span> 
+            </button>
+            
+            <div class="fill position-relative">
+                <div class="collapse show" id="tools-dropdown">
+                    <div id="tools">
+                        <button class="tool-btn" onclick="makeMirror(this)">
+                            <i class="far fa-square"></i>
+                            <span class="trn" data-trn="mirror">Mirror</span>
+                        </button>
+                        
+                        <button class="tool-btn" onclick="makeRay(this)">
+                            <i class="fas fa-asterisk"></i>
+                            <span class="trn" data-trn="ray">Ray</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
     </div>
     
     <canvas id="canvas"></canvas>
@@ -163,10 +208,16 @@
         
         // Translation
         $(".trn").translate(lang);
-        $("#lang-select").val(lang);
+        $("#lang-select").val((lang === "cs" ? "cs" : "en"));
         
         // Language selection menu
         $("#lang-form").change(() => {
+            lang = $("#lang-select").val();
+            $(".trn").translate(lang);
+        });
+        
+        // Event
+        $(document).on("translate", () => {
             lang = $("#lang-select").val();
             $(".trn").translate(lang);
         });

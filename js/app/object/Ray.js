@@ -14,7 +14,7 @@ class Ray extends Path {
 
         this.config = Object.assign({
             color: '#fff',
-            lightness: 1,
+            lightness: 4,
             power: App.config.rayLength
         }, config);
 
@@ -27,15 +27,16 @@ class Ray extends Path {
         const ray = new this(position, angle, config);
 
         ray.strokeColor = ray.config.color;
-        ray.strokeWidth = 2;
+        ray.strokeWidth = 1;
         ray.strokeCap = 'butt';
         ray.strokeJoin = 'bevel';
         ray.shadowColor = ray.config.color;
         ray.shadowBlur = ray.config.lightness;
+        ray.blendMode = "screen";
         ray.sendToBack();
 
         ray.moveTo(ray.point.start);
-        ray.lineTo(ray.point.start.clone().add([ ray.config.power, 0 ]).rotate(ray.angle, ray.point.start));
+        ray.lineTo(ray.point.start.add([ ray.config.power, 0 ]).rotate(ray.angle, ray.point.start));
 
         return ray;
     }
