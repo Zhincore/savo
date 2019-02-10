@@ -8,9 +8,37 @@
             cs: "Panel nástrojů",
             en: "Toolbar"
         },
+        "color": {
+            cs: "Barva",
+            en: "Color"
+        },
+        "material": {
+            cs: "Materiál",
+            en: "Material"
+        },
+        "ri": {
+            cs: "Index lomu",
+            en: "Refractive index"
+        },
+        "dpnd_on_mat": {
+            cs: "Závislý na materiálu",
+            en: "Dependent on material"
+        },
         "enviroment": {
             cs: "Prostředí",
             en: "Enviroment"
+        },
+        "object": {
+            cs: "Objekt",
+            en: "Object"
+        },
+        "makeselection": {
+            cs: "Vyberte objekt abyste mohli změnit jeho nastavení.",
+            en: "Select an object to change it's settings."
+        },
+        "type": {
+            cs: "Typ",
+            en: "Type"
         },
         "recalculate": {
             cs: "Přepočítat",
@@ -100,6 +128,12 @@
     
     // $(selector).translate(lang)
     $.fn.translate = function(lang) {
+        switch(lang){
+            case "en-US":
+                lang = "en";
+                break;
+        }
+    
         this.each((i, el) => {
             el = $(el);
             const trn = el.attr("data-trn");

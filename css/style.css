@@ -16,6 +16,11 @@ canvas{
     background: none;
 }
 
+.fill{
+    width: 100%;
+    height: 100%;
+}
+
 /*=================*/
 
 #panel{
@@ -58,7 +63,15 @@ canvas{
 
 #toolbar h3{
     font-size: 125%;
+    color: var(--white);
     margin-left: -8px;
+}
+
+#toolbar h4{
+    font-size: 100%;
+    color: var(--light);
+    opacity: .5;
+    margin-left: 8px;
 }
 
 #toolbar .sector{
@@ -73,7 +86,7 @@ canvas{
 .exp-button{
     border: 0;
     background: none;
-    padding: 8px 8px;
+    padding: 8px 16px;
     font-weight: bold;
     cursor: pointer;
     width: 100%;
@@ -99,7 +112,15 @@ canvas{
 
 #tools-wrap{
     position: absolute;
-    right: -16px !important;
+    bottom: -42px;
+    right: 0;
+    display: block;
+    padding: 0 16px;
+}
+
+#tools-dropdown{
+    position: absolute;
+    right: 0 !important;
     top: 100% !important;
     left: auto !important;
     transform: none !important;
@@ -108,14 +129,13 @@ canvas{
 #tools{   
     display: flex;
     flex-direction: column;
-    margin-top: 16px;
 }
 
 .tool-btn{
     border: 0;
     border-radius: 2px;
     background: rgba(192, 192, 192, .8);
-    padding: 8px;
+    padding: 8px 16px;
     cursor: pointer;
     
     display: flex;
@@ -133,5 +153,11 @@ canvas{
 
 .tool-btn i{
     font-size: 200%;
+}
+
+/*=================*/
+
+#objTypeH{
+    display: inline-block;
 }
 

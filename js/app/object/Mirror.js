@@ -38,7 +38,8 @@ class Mirror extends Path {
         mirror.strokeWidth = 4;
         mirror.moveTo(x1, y1);
         mirror.lineTo(x2, y2);
-        mirror.name = "mirror";
+        mirror.data.type = "mirror";
+        mirror.name = "mesh";
 
         group.addChild(mirror);
         return mirror;

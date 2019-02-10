@@ -11,8 +11,8 @@ class LightSource extends Group {
         this.size = config.size !== undefined ? config.size : 20;
 
         this.config = Object.assign({
-            color: '#fff',
-            lightness: 1,
+            color: '#ffffff',
+            lightness: 4,
         }, config);
     }
 
@@ -23,6 +23,8 @@ class LightSource extends Group {
         sourceObject.shadowColor = lightSource.config.color;
         sourceObject.shadowBlur = lightSource.config.color;
         sourceObject.data.movable = true;
+        sourceObject.name = "mesh";
+        sourceObject.data.type = "ray";
 
         sourceObject.rotate(lightSource.angle);
         lightSource.addChild(sourceObject);
