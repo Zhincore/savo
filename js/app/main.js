@@ -523,11 +523,6 @@ const Angle = {
 
         let refractionAngle = this.refract(v1.normalize(), v2.normalize(), eta).angle;
 
-        //if our ray starts from inside, so wants to escape, then the v2 has to be negated
-        if(o2.contains(o1.point.start)) {
-            refractionAngle += 180;
-        }
-
         return refractionAngle;
     },
 
