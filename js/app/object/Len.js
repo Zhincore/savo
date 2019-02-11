@@ -10,40 +10,84 @@ class Len extends CompoundPath {
         let len = new this(point, angle);
 
         var xDistance = (span / 2) / Math.tan(Math.radians(angle / 2));
-        var extraXDistance = (span/2) / Math.tan(Math.radians(angle));
+        var extraXDistance = (span/2) / Math.tan(Math.radians((180 - angle / 2) / 2));
 
         var A = new Point(point.x + xDistance, point.y - span / 2);
         var B = new Point(point.x + xDistance, point.y + span / 2);
         var M = new Point(point.x + xDistance + extraXDistance, point.y);
-        var Mp = M.clone().subtract(new Point(extraXDistance * 2, 0));
+        var N = M.clone().subtract(new Point(extraXDistance * 2, 0));
 
-        len.addChild(new Path.Arc(A, M, B));
-        len.addChild(new Path.Arc(A, Mp, B));
-//
-    len.strokeColor = '#729fcf';
-    len.strokeWidth = 2;
-    len.fillColor = '#aefeff';
+        len.mArc = new Path.Arc(A, M, B);
+        len.nArc = new Path.Arc(A, N, B);
 
-//
-//     var path1 = new Path.Arc(top, through1, bottom);
-//     var path2 = new Path.Arc(top, through2, bottom);
-//
-//     len.addChild(path1);
-//     len.addChild(path2);
+        len.addChild(len.mArc);
+        len.addChild(len.nArc);
 
-        len.strokeColor = "#68ffff66";
-        len.strokeWidth = 4;
+        //centers of len circles
+        len.M = M;
+        len.N = N;
 
-        len.name = "len";
-
-        // group.addChild(mirror);
+        group.addChild(len);
         return len;
     }
 
-    constructor(position, angle) {
+    constructor(position, angle, config) {
         super();
+
+        //style
+        this.strokeColor = "#68ffff66";
+        this.strokeWidth = 1;
+        this.fillColor = '#aefeff44';
+        //endstyle
+
+        this.data.type = "len";
+        this.name = "mesh";
 
         this.angle = angle;
         this.data.movable = true;
+
+        this.config = Object.assign({
+            RI: App.materialRI.glass
+        }, config);
+    }
+
+    /*
+    Checks on which part of len point is and returns center of that len's part circle
+     */
+    getLenCircleCenter(point) {
+        if(this.mArc.contains(point)) {
+            return this.N;
+        } else if(this.nArc.contains(point)) {
+            return this.M;
+        } else {
+            console.log('point not found in any of len arcs', this, point);
+            return new Point(0, 0);
+        }
+    }
+
+    getVector(toPoint) {
+        return toPoint.subtract(this.getLenCircleCenter(toPoint));
+    }
+
+    getPerpendicularVector(toPoint) {
+        this.rotate(90);
+        let v = this.getVector(toPoint);
+        this.rotate(-90);
+        return v;
+    }
+
+    // Events
+    onFocus() {
+        if(App.config.debug) {
+            console.log('focus', this);
+            this.selected = true;
+        }
+    }
+
+    onUnfocus() {
+        if(App.config.debug) {
+            console.log('unfocus', this);
+            this.selected = false;
+        }
     }
 }

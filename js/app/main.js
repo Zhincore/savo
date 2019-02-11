@@ -21,7 +21,7 @@ const App = {
             tolerance: 5
         },
         enviroment: {
-            RI: 1,
+            RI: 1.0,
             color: "#00111f",
         },
         iteration: 25,
@@ -32,7 +32,7 @@ const App = {
         anglePrecision: 0,
         rayLength: 1000
     },
-    
+
     materialRI: {
         vacuum:     1.00,
         air:        1.00,
@@ -52,6 +52,7 @@ const App = {
         text.justification = 'center';
         text.fillColor = '#ddd';
         text.content = content;
+        text.rotation = -30;
     },
 
     updateConfig: function(data) {
@@ -135,23 +136,24 @@ const App = {
             // Mirror.create(this.canvas.width/3*2-100, this.canvas.height/3*2 - 120, this.canvas.width/3*2-100-25, this.canvas.height/3*2 - 20),
 
             //horizontal mirrors
-            Mirror.create(new Point(400, 300), new Point(500, 300)),
-            Mirror.create(new Point(400, 310), new Point(500, 310)),
-            Mirror.create(new Point(400, 320), new Point(500, 320)),
-
-            //vertical mirrors
-            Mirror.create(new Point(400, 400), new Point(400, 500)),
-            Mirror.create(new Point(410, 400), new Point(410, 500)),
-
-            //45* angled
-            Mirror.create(new Point(400, 400), new Point(500, 500)),
-            Mirror.create(new Point(500, 400), new Point(400, 500)),
-            Mirror.create(new Point(400, 400), new Point(500, 500)),
-            Mirror.create(new Point(500, 400), new Point(400, 500)),
-            Len.create(new Point(200, 200), 60, 60),
-            Len.create(new Point(200, 300), 60, 120),
-            Len.create(new Point(300, 200), 30, 120),
-            Len.create(new Point(200, 350), 70, 60)
+            Mirror.create(new Point(400, 300), new Point(300, 300)),
+            // Mirror.create(new Point(400, 310), new Point(500, 310)),
+            // Mirror.create(new Point(400, 320), new Point(500, 320)),
+            //
+            // //vertical mirrors
+            // Mirror.create(new Point(400, 400), new Point(400, 500)),
+            // Mirror.create(new Point(410, 400), new Point(410, 500)),
+            //
+            // //45* angled
+            // Mirror.create(new Point(400, 400), new Point(500, 500)),
+            // Mirror.create(new Point(500, 400), new Point(400, 500)),
+            // Mirror.create(new Point(400, 400), new Point(500, 500)),
+            // Mirror.create(new Point(500, 400), new Point(400, 500)),
+            // Len.create(new Point(200, 200), 60, 60),
+            // Len.create(new Point(400, 400), 120, 120),
+            Len.create(new Point(500, 150), 180, 90),
+            Len.create(new Point(350, 300), 50, 120),
+            // Len.create(new Point(200, 350), 70, 60)
         );
         //createLen(canvas.width/3*2, canvas.height/3*2);
 
@@ -176,13 +178,21 @@ const App = {
         view.onMouseDown = (event) => {
             let hitResult = project.hitTest(event.point, this.config.hitOptions);
 
+            if(this.selectionRectangle) {
+                if(typeof this.selectionRectangle.parent.children['mesh'].onUnfocus === 'function') {
+                    this.selectionRectangle.parent.children['mesh'].onUnfocus();
+                }
+            }
+
             if (hitResult) {
                 let path = hitResult.item;
 
                 if(path.data.movable === true){
                     console.log(path);
 
-                    if(this.selectionRectangle && !path.parent.children["selection rectangle"]) this.selectionRectangle.remove();
+                    if(this.selectionRectangle && !path.parent.children["selection rectangle"]) {
+                        this.selectionRectangle.remove();
+                    }
                     var b = path.bounds.clone().expand(10, 10);
 
                     this.selectionRectangle = new Path.Rectangle(b);
@@ -198,12 +208,17 @@ const App = {
 
                     path.parent.addChild(this.selectionRectangle);
                     this.createObjOptions();
+
+                    if(typeof this.selectionRectangle.parent.children['mesh'].onFocus === 'function') {
+                        this.selectionRectangle.parent.children['mesh'].onFocus();
+                    }
                 }
             }else{
-                if(this.selectionRectangle !== null)
+                if(this.selectionRectangle !== null) {
                     this.selectionRectangle.remove();
                     this.selectionRectangle = null;
                     this.createObjOptions();
+                }
             }
         };
 
@@ -316,7 +331,6 @@ const App = {
             if(isRay){
                 form.find("input[name='color']").val(obj.config.color);
             }else if(isLen){
-                let RI = getKeyByValue(this.materialRI, obj.config.RI);
             }
             
             // Remove previous handlers
@@ -379,21 +393,36 @@ const App = {
     },
 
     collide: function(ray, object) {
-        let end = new Point(App.canvas.width*2, 0);
+        let intersections = ray.getIntersections(object);
+        let intersection = intersections[0];
+        console.log(intersection);
+
+        // console.log(intersection.point, intersections);
 
         // do final calulation
         switch(object.data.type){
             case "mirror":
-                let intersections = ray.getIntersections(object);
-                let intersection = intersections[intersections.length-1];
-
                 let reflectionAngle = Angle.calculateAbsoluteReflectionAngleForObjects(ray, object, intersection.point);
                 // console.log(reflectionAngle);
 // console.log(intersection.point, ray.angle, reflectionAngle);
-                this.rays.push(ray.reflectOnPoint(intersection.point, reflectionAngle));
+                this.rays.push(ray.continueFromPoint(intersection.point, reflectionAngle));
                 break;
             case "len":
-                calcLenCollision(ray, object, end);
+                let eta = Angle.getEta(ray.config.RI, object.config.RI);
+                let refractedRayRI = object.config.RI;
+                if(eta === 1) {
+                    eta = Angle.getEta(object.config.RI, App.config.enviroment.RI);
+                    refractedRayRI = App.config.enviroment.RI;
+                }
+
+                let refractionAngle = Angle.calculateAbsoluteRefractionAngleForObjects(ray, object, intersection.point, eta);
+
+                let refractedRay = ray.continueFromPoint(intersection.point, refractionAngle);
+                refractedRay.config.RI = refractedRayRI;
+
+                console.log(refractedRay);
+
+                this.rays.push(refractedRay);
                 break;
         }
     },
@@ -472,15 +501,68 @@ const Angle = {
      */
     calculateAbsoluteReflectionAngleForObjects: function(o1, o2, intersectionPoint) {
         let v1 = o1.getVector(intersectionPoint);
-        let v2 = o2.getPerpendicularVector().multiply(-1).normalize();
+        let v2 = o2.getPerpendicularVector().normalize();
 
         // r=d−2(d⋅n)n, n normalized
         let vr = v1.subtract(v2.multiply(v1.dot(v2) * 2));
 
-        // this theoretically variable that should determine on which side of mirror the ray start is, although i doubt if it works + it doesnt seem to be needed
-        // d = (o1.point.start.x - o2.getX2()) * (o2.getY2() - o2.getY1()) - (o1.point.start.y - o2.getY1()) * (o2.getX2() - o2.getX1());
-
         return vr.angle;
+    },
+
+    calculateAbsoluteRefractionAngleForObjects: function(o1, o2, intersectionPoint, eta) {
+        let v1 = o1.getVector(intersectionPoint);
+        let v2 = o2.getVector(intersectionPoint);
+
+        //
+        // let angleIn = v1.angle - v2.angle;
+        // console.log(angleIn, RIfactor, v2.angle, v1.angle, v2.subtract(v1).angle, v1.subtract(v2).angle, Angle.betweenTwoVectors(v1, v2));
+        //
+        // console.log(this.betweenTwoVectors(v1, v2));
+        //
+        // refractionAngle = RIfactor;
+
+        let refractionAngle = this.refract(v1.normalize(), v2.normalize(), eta).angle;
+
+        //if our ray starts from inside, so wants to escape, then the v2 has to be negated
+        if(o2.contains(o1.point.start)) {
+            refractionAngle += 180;
+        }
+
+        return refractionAngle;
+    },
+
+    /*
+    For the incident vector I and surface normal N, and the
+ratio of indices of refraction eta, return the refraction
+vector. The result is computed by
+k = 1.0 - eta * eta * (1.0 - dot(N, I) * dot(N, I))
+if (k < 0.0)
+ return genType(0.0)
+else
+ return eta * I - (eta * dot(N, I) + sqrt(k)) * N
+The input parameters for the incident vector I and the
+surface normal N must already be normalized to get the
+desired results.
+     */
+    refract: function(normalizedI, normalizedN, eta) {
+        let N_dot_I = Math.pow(normalizedN.dot(normalizedI), 2);
+
+        let k = 1.0 - Math.pow(eta, 2) * (1.0 - Math.pow(N_dot_I, 2));
+        if (k < 0)
+            return new Point(0,0);
+        else
+            return normalizedI.multiply(eta).subtract(normalizedN.multiply((N_dot_I * eta + Math.sqrt(k))));
+    },
+
+    getEta: function(fromRI, toRI) {
+        return fromRI / toRI;
+    },
+
+    betweenTwoVectors: function(v1, v2) {
+        let m1 = Math.sqrt(Math.pow(v1.x, 2) + Math.pow(v1.y, 2));
+        let m2 = Math.sqrt(Math.pow(v2.x, 2) + Math.pow(v2.y, 2));
+
+        return Math.degrees(Math.acos(v1.dot(v2) / (m1 * m2)));
     }
 };
 

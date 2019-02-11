@@ -1,9 +1,18 @@
 class Ray extends Path {
+    static create(position, angle, config = {}) {
+        const ray = new this(position, angle, config);
+
+        ray.sendToBack();
+
+        ray.moveTo(ray.point.start);
+        ray.lineTo(ray.point.start.add([ ray.config.power, 0 ]).rotate(ray.angle, ray.point.start));
+        ray.fixPositions();
+
+        return ray;
+    }
+
     constructor(position, angle = 0, config) {
         super();
-
-        //correcting variables
-
 
         this.angle = App.normalizeAngle(angle);
 
@@ -15,33 +24,34 @@ class Ray extends Path {
         this.config = Object.assign({
             color: '#fff',
             lightness: 4,
-            power: App.config.rayLength
+            power: App.config.rayLength,
+            RI: App.materialRI.air,
         }, config);
 
         if(App.config.debug) {
             App.debug(this.point.start.x, this.point.start.y - 30, `(x: ${this.point.start.x}, y: ${this.point.start.y}, ${this.angle}°)`);
         }
+
+        //style
+        this.strokeColor = this.config.color;
+        this.strokeWidth = 1;
+        this.strokeCap = 'butt';
+        this.strokeJoin = 'bevel';
+        this.shadowColor = this.config.color;
+        this.shadowBlur = this.config.lightness;
+        this.blendMode = "screen";
+        //endstyle
     }
 
-    static create(position, angle, config = {}) {
-        const ray = new this(position, angle, config);
-
-        ray.strokeColor = ray.config.color;
-        ray.strokeWidth = 1;
-        ray.strokeCap = 'butt';
-        ray.strokeJoin = 'bevel';
-        ray.shadowColor = ray.config.color;
-        ray.shadowBlur = ray.config.lightness;
-        ray.blendMode = "screen";
-        ray.sendToBack();
-
-        ray.moveTo(ray.point.start);
-        ray.lineTo(ray.point.start.add([ ray.config.power, 0 ]).rotate(ray.angle, ray.point.start));
-
-        return ray;
+    fixPositions() {
+        let start = this.firstSegment;
+        let end = this.lastSegment;
+        const normalizedVector = this.getVector(end.point).normalize();
+        start.point = start.point.add(normalizedVector);
+        end.point = end.point.add(normalizedVector);
     }
 
-    reflectOnPoint(point, angle) {
+    continueFromPoint(point, angle) {
         this.endOnPoint(point);
 
         return Ray.create(point, angle, Object.assign(this.config, {

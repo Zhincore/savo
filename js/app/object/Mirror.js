@@ -2,31 +2,35 @@ class Mirror extends Path {
     static create(point1, point2) {
         let group = new Group();
         let mirror = new this(point1, point2);
+        group.addChild(mirror);
 
-        mirror.strokeColor = '#affeff66';
-        mirror.strokeWidth = 4;
         mirror.moveTo(point1.x, point1.y);
         mirror.lineTo(point2.x, point2.y);
-        mirror.data.type = "mirror";
-        mirror.name = "mesh";
 
-        group.addChild(mirror);
         return mirror;
     }
 
     constructor(point1, point2) {
         super();
 
+        //style
+        this.strokeColor = '#affeff66';
+        this.strokeWidth = 4;
+        //endstyle
+
+        this.data.type = "mirror";
+        this.name = "mesh";
+
         this.angle = Angle.calculateFor2Points(point1, point2);
         this.data.movable = true;
     }
 
     getPoint1() {
-        return this.getSegments()[0];
+        return this.getSegments()[0].point;
     }
 
     getPoint2() {
-        return this.getSegments()[1];
+        return this.getSegments()[1].point;
     }
 
     rotate(angle){
@@ -43,5 +47,20 @@ class Mirror extends Path {
         let v = this.getVector();
         this.rotate(-90);
         return v;
+    }
+
+    // Events
+    onFocus() {
+        if(App.config.debug) {
+            console.log('focus', this);
+            this.selected = true;
+        }
+    }
+
+    onUnfocus() {
+        if(App.config.debug) {
+            console.log('unfocus', this);
+            this.selected = false;
+        }
     }
 }
