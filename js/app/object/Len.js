@@ -9,13 +9,13 @@ class Len extends CompoundPath {
         let group = new Group();
         let len = new this(point, angle);
 
-        var xDistance = (span / 2) / Math.tan(Math.radians(angle / 2));
-        var extraXDistance = (span/2) / Math.tan(Math.radians((180 - angle / 2) / 2));
+        let xDistance = (span / 2) / Math.tan(Math.radians(angle / 2));
+        let extraXDistance = (span/2) / Math.tan(Math.radians((180 - angle / 2) / 2));
 
-        var A = new Point(point.x + xDistance, point.y - span / 2);
-        var B = new Point(point.x + xDistance, point.y + span / 2);
-        var M = new Point(point.x + xDistance + extraXDistance, point.y);
-        var N = M.clone().subtract(new Point(extraXDistance * 2, 0));
+        let A = new Point(point.x + xDistance, point.y - span / 2);
+        let B = new Point(point.x + xDistance, point.y + span / 2);
+        let M = new Point(point.x + xDistance + extraXDistance, point.y);
+        let N = M.clone().subtract(new Point(extraXDistance * 2, 0));
 
         len.mArc = new Path.Arc(A, M, B);
         len.nArc = new Path.Arc(A, N, B);
@@ -24,8 +24,19 @@ class Len extends CompoundPath {
         len.addChild(len.nArc);
 
         //centers of len circles
-        len.M = M;
-        len.N = N;
+        len.AMBc = point;
+        len.ANBc = point.add(new Point(2 * xDistance, 0));
+
+        // uncomment below for centers debugging purposes
+        // let debugMCenter = new Path.Circle(len.AMBc, 5);
+        // let debugNCenter = new Path.Circle(len.ANBc, 5);
+        // let debugMCircle = new Path.Circle(len.AMBc, xDistance + extraXDistance);
+        // let debugNCircle = new Path.Circle(len.ANBc, xDistance + extraXDistance);
+        //
+        // debugMCenter.fillColor = 'white';
+        // debugNCenter.fillColor = 'white';
+        // debugMCircle.strokeColor = 'white';
+        // debugNCircle.strokeColor = 'white';
 
         group.addChild(len);
         return len;
@@ -56,9 +67,9 @@ class Len extends CompoundPath {
      */
     getLenCircleCenter(point) {
         if(this.mArc.contains(point)) {
-            return this.N;
+            return this.AMBc;
         } else if(this.nArc.contains(point)) {
-            return this.M;
+            return this.ANBc;
         } else {
             console.log('point not found in any of len arcs', this, point);
             return new Point(0, 0);

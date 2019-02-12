@@ -28,6 +28,8 @@ class Ray extends Path {
             RI: App.materialRI.air,
         }, config);
 
+        this.enteredObjects = [];
+
         if(App.config.debug) {
             App.debug(this.point.start.x, this.point.start.y - 30, `(x: ${this.point.start.x}, y: ${this.point.start.y}, ${this.angle}°)`);
         }
@@ -76,5 +78,13 @@ class Ray extends Path {
 
     getRemainingPower() {
         return round(this.config.power - this.length, App.config.precision);
+    }
+
+    isInside(object) {
+        return this.enteredObjects.indexOf(object.getId()) >= 0;
+    }
+
+    getEnteredObjects() {
+        return JSON.parse(JSON.stringify( this.enteredObjects ))
     }
 }

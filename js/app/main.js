@@ -395,17 +395,13 @@ const App = {
     collide: function(ray, object) {
         let intersections = ray.getIntersections(object);
         let intersection = intersections[0];
-        console.log(intersection);
-
-        // console.log(intersection.point, intersections);
 
         // do final calulation
         switch(object.data.type){
             case "mirror":
                 let reflectionAngle = Angle.calculateAbsoluteReflectionAngleForObjects(ray, object, intersection.point);
-                // console.log(reflectionAngle);
-// console.log(intersection.point, ray.angle, reflectionAngle);
                 this.rays.push(ray.continueFromPoint(intersection.point, reflectionAngle));
+
                 break;
             case "len":
                 let eta = Angle.getEta(ray.config.RI, object.config.RI);
@@ -417,12 +413,24 @@ const App = {
 
                 let refractionAngle = Angle.calculateAbsoluteRefractionAngleForObjects(ray, object, intersection.point, eta);
 
+                //todo maybe put it somewhere else
+                let enteredObjects = ray.getEnteredObjects();
+                if(!ray.isInside(object)) {
+                    enteredObjects.push(object.getId());
+                } else {
+                    let indexOfObj = enteredObjects.indexOf(object.getId());
+                    enteredObjects.splice(indexOfObj);
+
+                    refractionAngle += 180; //ray escapes len
+                }
+
                 let refractedRay = ray.continueFromPoint(intersection.point, refractionAngle);
                 refractedRay.config.RI = refractedRayRI;
 
-                console.log(refractedRay);
+                refractedRay.enteredObjects = enteredObjects;
 
                 this.rays.push(refractedRay);
+
                 break;
         }
     },
@@ -571,91 +579,3 @@ function round(number, precision) {
 function getKeyByValue(object, value) {
   return Object.keys(object).find(key => object[key] === value);
 }
-
-/// ### createLen
-// function createLen(posX, posY, diopter=5, RI=1.6){
-//     var group = new Group();
-//     var len = new CompoundPath();
-//
-//     var top = new Point(posX, posY-50);
-//     var bottom = new Point(posX, posY+50);
-//     var through1 = new Point(posX-15, posY);
-//     var through2 = new Point(posX+15, posY);
-//
-//     var path1 = new Path.Arc(top, through1, bottom);
-//     var path2 = new Path.Arc(top, through2, bottom);
-//
-//     len.addChild(path1);
-//     len.addChild(path2);
-//
-//     len.strokeColor = '#729fcf';
-//     len.strokeWidth = 2;
-//     len.fillColor = '#aefeff';
-//     len.name = "len";
-//     len.data.RI = RI; // Refractive index // 1.60 Flint glass (pure)
-//     len.data.D = diopter;
-//
-//     App.objects.push(len);
-//     group.addChild(len);
-// }
-
-// function probeCollisionAngle(ray, object, intersection, i=0){
-//     if(!intersection) return [new Point(0, 0), new Point(0, 0)];
-//
-//     // prepare ray
-//     ray.removeSegment(ray.lastSegment.index);
-//     ray.lineTo(intersection.point);
-//
-//     // find out the angle of mirror
-//     var cast1 = new Path();
-//     var end1 = new Point(canvas.width, 0.00001);
-//
-//     cast1.moveTo(ray.segments[ray.segments.length-2].point);
-//     cast1.lineTo(intersection.point.add(end1));
-//
-//     var castIntersections = cast1.getIntersections(object);
-//     var collision1 = (castIntersections.length > 0 ? castIntersections[0].point : new Point(0, 0));
-//
-//     var castVector = collision1.subtract(intersection.point);
-//     var vector = ray.segments[ray.segments.length-2].point.subtract(ray.lastSegment.point);
-//
-//     cast1.remove();
-//
-//     return [castVector, vector];
-// }
-
-// function calcLenCollision(ray, len, end){
-//     // bend ray on entrance
-//     var intersections = ray.getIntersections(len);
-//     var intersection = (intersections.length > 1 ? intersections[intersections.length-2] : null);
-//     if(!intersection) return;
-//     var probe = probeCollisionAngle(ray, len, intersection);
-//     var castVector = probe[0]; // A
-//     var vector = probe[1]; // B
-//
-//     var normal = ((0.5 * Math.PI) + castVector.angleInRadians);
-//     var angle = ((vector.angleInRadians) - normal);
-//     var angle2 = roundN(((normal - Math.PI)) - Math.asin((enviroment.RI * Math.sin(angle)) / len.data.RI));
-//
-//     ray.lineTo( intersection.point.add( end.rotate( angle2 * (180 / Math.PI) ) ) );
-//     console.log((normal - Math.PI) * (180 / Math.PI))
-//
-//     // bend ray on leaving
-//     /*var intersections = ray.getIntersections(len);
-//     var intersection = (intersections.length > 1 ? intersections[intersections.length-1] : null);
-//     if(!intersection) return;
-//     var probe = probeCollisionAngle(ray, len, intersection, 1);
-//     var castVector = probe[0];
-//     var vector = probe[1];
-//
-//     var normal = ((0.5 * Math.PI) + castVector.angleInRadians);
-//     var angle = ((vector.angleInRadians) - normal);
-//     var angle2 = roundN(Math.asin((len.data.RI * Math.sin(angle)) / enviroment.RI) + (normal - Math.PI));
-//
-//     /*ray.removeSegment(ray.lastSegment.index);
-//     ray.lineTo(intersection.point);
-//     console.log((len.data.RI * Math.sin(angle)) / enviroment.RI)
-//
-//     ray.lineTo( intersection.point.add( end.rotate( angle2 * (180 / Math.PI) ) ) );*/
-//
-// }
