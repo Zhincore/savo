@@ -25,7 +25,7 @@ class Ray extends Path {
             color: '#fff',
             lightness: 4,
             power: App.config.rayLength,
-            RI: App.materialRI.air,
+            RI: App.config.enviroment.RI,
         }, config);
 
         this.enteredObjects = [];

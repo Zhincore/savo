@@ -406,10 +406,12 @@ const App = {
             case "len":
                 let eta = Angle.getEta(ray.config.RI, object.config.RI);
                 let refractedRayRI = object.config.RI;
-                if(eta === 1) {
+                if(ray.isInside(object)) {
                     eta = Angle.getEta(object.config.RI, App.config.enviroment.RI);
                     refractedRayRI = App.config.enviroment.RI;
                 }
+
+                // console.log(eta, object.config.RI, App.config.enviroment.RI, ray.config.RI);
 
                 let refractionAngle = Angle.calculateAbsoluteRefractionAngleForObjects(ray, object, intersection.point, eta);
 
@@ -420,8 +422,6 @@ const App = {
                 } else {
                     let indexOfObj = enteredObjects.indexOf(object.getId());
                     enteredObjects.splice(indexOfObj);
-
-                    refractionAngle += 180; //ray escapes len
                 }
 
                 let refractedRay = ray.continueFromPoint(intersection.point, refractionAngle);
@@ -521,6 +521,11 @@ const Angle = {
         let v1 = o1.getVector(intersectionPoint);
         let v2 = o2.getVector(intersectionPoint);
 
+        // console.log(eta);
+        if(o1.isInside(o2)) {
+            v2.angle += 180;
+        }
+
         //
         // let angleIn = v1.angle - v2.angle;
         // console.log(angleIn, RIfactor, v2.angle, v1.angle, v2.subtract(v1).angle, v1.subtract(v2).angle, Angle.betweenTwoVectors(v1, v2));
@@ -529,7 +534,7 @@ const Angle = {
         //
         // refractionAngle = RIfactor;
 
-        let refractionAngle = this.refract(v1.normalize(), v2.normalize(), eta).angle;
+        let refractionAngle = this.refractV2(v1.normalize(), v2.normalize(), eta).angle;
 
         return refractionAngle;
     },
@@ -546,6 +551,8 @@ else
 The input parameters for the incident vector I and the
 surface normal N must already be normalized to get the
 desired results.
+
+@deprecated apparently it didnt work the way it should
      */
     refract: function(normalizedI, normalizedN, eta) {
         let N_dot_I = Math.pow(normalizedN.dot(normalizedI), 2);
@@ -555,6 +562,22 @@ desired results.
             return new Point(0,0);
         else
             return normalizedI.multiply(eta).subtract(normalizedN.multiply((N_dot_I * eta + Math.sqrt(k))));
+    },
+
+    // using as reference:
+    // https://graphics.stanford.edu/courses/cs148-10-summer/docs/2006--degreve--reflection_refraction.pdf
+    refractV2: function(normalizedI, normalizedN, eta) {
+        let cosI = -1 * normalizedN.dot(normalizedI);
+        let sinT2 = eta * eta * (1.0 - cosI * cosI);
+
+        if (sinT2 > 1.0) {
+            console.log('invalid vector?');
+            return new Point(0,0); //invalid vector, shouldnt refract, too low angle
+        }
+
+        let cosT = Math.sqrt(1.0 - sinT2);
+
+        return normalizedI.multiply(eta).add(normalizedN.multiply(eta * cosI - cosT));
     },
 
     getEta: function(fromRI, toRI) {

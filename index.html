@@ -47,7 +47,7 @@
                             <div class="row">
                                 <label class="col-sm-4 col-form-label-sm"><span class="trn" data-trn="material">Material</span></label>
                                 <div class="col-sm-8"> 
-                                    <select id="envMat" class="matSelect form-control-sm" autocomplete="off" name="material" onInput="$('#envRI').val(App.materialRI[$(this).val()])">
+                                    <select id="envMat" class="matSelect form-control-sm" autocomplete="off" name="material" onchange="$('#envRI').val(App.materialRI[$(this).val()])">
                                         <option value="vacuum"><span class="trn" data-trn="vacuum">Vacuum</span></option>
                                     </select>
                                 </div>
