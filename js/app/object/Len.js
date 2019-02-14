@@ -19,24 +19,10 @@ class Len extends CompoundPath {
 
         len.mArc = new Path.Arc(A, M, B);
         len.nArc = new Path.Arc(A, N, B);
+        console.log(len.mArc, len.nArc);
 
         len.addChild(len.mArc);
         len.addChild(len.nArc);
-
-        //centers of len circles
-        len.AMBc = point;
-        len.ANBc = point.add(new Point(2 * xDistance, 0));
-
-        // uncomment below for centers debugging purposes
-        // let debugMCenter = new Path.Circle(len.AMBc, 5);
-        // let debugNCenter = new Path.Circle(len.ANBc, 5);
-        // let debugMCircle = new Path.Circle(len.AMBc, xDistance + extraXDistance);
-        // let debugNCircle = new Path.Circle(len.ANBc, xDistance + extraXDistance);
-        //
-        // debugMCenter.fillColor = 'white';
-        // debugNCenter.fillColor = 'white';
-        // debugMCircle.strokeColor = 'white';
-        // debugNCircle.strokeColor = 'white';
 
         group.addChild(len);
         return len;
@@ -67,13 +53,39 @@ class Len extends CompoundPath {
      */
     getLenCircleCenter(point) {
         if(this.mArc.contains(point)) {
-            return this.AMBc;
+            return this.getAMBcenter();
         } else if(this.nArc.contains(point)) {
-            return this.ANBc;
+            return this.getANBcenter();
         } else {
             console.log('point not found in any of len arcs', this, point);
             return new Point(0, 0);
         }
+    }
+
+    getAMBcenter() {
+        let thirdPoint = this.mArc.getPointAt(this.mArc.length);
+        if(thirdPoint === undefined) {
+            this.mArc.getPointAt(this.mArc.length / 3);
+        }
+
+        return Geometry.circleCenterFrom3Points(
+            this.mArc.getPointAt(0),
+            this.mArc.getPointAt(this.mArc.length / 2),
+            this.mArc.getPointAt(this.mArc.length)
+        )
+    }
+
+    getANBcenter() {
+        let thirdPoint = this.nArc.getPointAt(this.nArc.length);
+        if(thirdPoint === undefined) {
+            this.nArc.getPointAt(this.nArc.length / 3);
+        }
+
+        return Geometry.circleCenterFrom3Points(
+            this.nArc.getPointAt(0),
+            this.nArc.getPointAt(this.nArc.length / 2),
+            thirdPoint
+        )
     }
 
     getVector(toPoint) {
