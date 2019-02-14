@@ -509,12 +509,9 @@ const Angle = {
      */
     calculateAbsoluteReflectionAngleForObjects: function(o1, o2, intersectionPoint) {
         let v1 = o1.getVector(intersectionPoint);
-        let v2 = o2.getPerpendicularVector().normalize();
+        let v2 = o2.getPerpendicularVector();
 
-        // r=d−2(d⋅n)n, n normalized
-        let vr = v1.subtract(v2.multiply(v1.dot(v2) * 2));
-
-        return vr.angle;
+        return this.reflect(v1, v2.normalize()).angle;
     },
 
     calculateAbsoluteRefractionAngleForObjects: function(o1, o2, intersectionPoint, eta) {
@@ -526,56 +523,30 @@ const Angle = {
             v2.angle += 180;
         }
 
-        //
-        // let angleIn = v1.angle - v2.angle;
-        // console.log(angleIn, RIfactor, v2.angle, v1.angle, v2.subtract(v1).angle, v1.subtract(v2).angle, Angle.betweenTwoVectors(v1, v2));
-        //
-        // console.log(this.betweenTwoVectors(v1, v2));
-        //
-        // refractionAngle = RIfactor;
+        let refractionVector = this.refract(v1.normalize(), v2.normalize(), eta);
+        if(refractionVector === null) { //invalid angle, reflecting instead
+            return this.reflect(v1, v2.normalize()).angle;
+        }
 
-        let refractionAngle = this.refractV2(v1.normalize(), v2.normalize(), eta).angle;
-
-        return refractionAngle;
+        return refractionVector.angle;
     },
 
-    /*
-    For the incident vector I and surface normal N, and the
-ratio of indices of refraction eta, return the refraction
-vector. The result is computed by
-k = 1.0 - eta * eta * (1.0 - dot(N, I) * dot(N, I))
-if (k < 0.0)
- return genType(0.0)
-else
- return eta * I - (eta * dot(N, I) + sqrt(k)) * N
-The input parameters for the incident vector I and the
-surface normal N must already be normalized to get the
-desired results.
-
-@deprecated apparently it didnt work the way it should
-     */
-    refract: function(normalizedI, normalizedN, eta) {
-        let N_dot_I = Math.pow(normalizedN.dot(normalizedI), 2);
-
-        let k = 1.0 - Math.pow(eta, 2) * (1.0 - Math.pow(N_dot_I, 2));
-        if (k < 0)
-            return new Point(0,0);
-        else
-            return normalizedI.multiply(eta).subtract(normalizedN.multiply((N_dot_I * eta + Math.sqrt(k))));
+    reflect: function(v1, v2) {
+        // r=d−2(d⋅n)n, n normalized
+        return v1.subtract(v2.multiply(v1.dot(v2) * 2));
     },
 
     // using as reference:
     // https://graphics.stanford.edu/courses/cs148-10-summer/docs/2006--degreve--reflection_refraction.pdf
-    refractV2: function(normalizedI, normalizedN, eta) {
-        let cosI = -1 * normalizedN.dot(normalizedI);
-        let sinT2 = eta * eta * (1.0 - cosI * cosI);
+    refract: function(normalizedI, normalizedN, eta) {
+        const cosI = -1 * normalizedN.dot(normalizedI);
+        const sinT2 = eta * eta * (1.0 - cosI * cosI);
 
         if (sinT2 > 1.0) {
-            console.log('invalid vector?');
-            return new Point(0,0); //invalid vector, shouldnt refract, too low angle
+            return null; //invalid vector, shouldnt refract, too low angle
         }
 
-        let cosT = Math.sqrt(1.0 - sinT2);
+        const cosT = Math.sqrt(1.0 - sinT2);
 
         return normalizedI.multiply(eta).add(normalizedN.multiply(eta * cosI - cosT));
     },
