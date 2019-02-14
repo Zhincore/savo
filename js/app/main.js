@@ -490,86 +490,9 @@ const testSuite = {
     },
 }
 
-const Angle = {
-    calculateFor2Points: function (point1, point2) {
-        let a = Math.abs(point2.x - point1.x);
-        let b = Math.abs(point2.y - point1.y);
-        let c = Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
-
-        return Math.degrees(Math.asin(b/c));
-    },
-
-    /**
-     * Returns absolute angle of reflection for two objects and point of intersection (tilt angle to X axis)
-     *
-     * @param o1 Ray
-     * @param o2 Mirror
-     * @param intersectionPoint Point
-     * @returns int 0-359 degrees
-     */
-    calculateAbsoluteReflectionAngleForObjects: function(o1, o2, intersectionPoint) {
-        let v1 = o1.getVector(intersectionPoint);
-        let v2 = o2.getPerpendicularVector();
-
-        return this.reflect(v1, v2.normalize()).angle;
-    },
-
-    calculateAbsoluteRefractionAngleForObjects: function(o1, o2, intersectionPoint, eta) {
-        let v1 = o1.getVector(intersectionPoint);
-        let v2 = o2.getVector(intersectionPoint);
-
-        // console.log(eta);
-        if(o1.isInside(o2)) {
-            v2.angle += 180;
-        }
-
-        let refractionVector = this.refract(v1.normalize(), v2.normalize(), eta);
-        if(refractionVector === null) { //invalid angle, reflecting instead
-            return this.reflect(v1, v2.normalize()).angle;
-        }
-
-        return refractionVector.angle;
-    },
-
-    reflect: function(v1, v2) {
-        // r=d−2(d⋅n)n, n normalized
-        return v1.subtract(v2.multiply(v1.dot(v2) * 2));
-    },
-
-    // using as reference:
-    // https://graphics.stanford.edu/courses/cs148-10-summer/docs/2006--degreve--reflection_refraction.pdf
-    refract: function(normalizedI, normalizedN, eta) {
-        const cosI = -1 * normalizedN.dot(normalizedI);
-        const sinT2 = eta * eta * (1.0 - cosI * cosI);
-
-        if (sinT2 > 1.0) {
-            return null; //invalid vector, shouldnt refract, too low angle
-        }
-
-        const cosT = Math.sqrt(1.0 - sinT2);
-
-        return normalizedI.multiply(eta).add(normalizedN.multiply(eta * cosI - cosT));
-    },
-
-    getEta: function(fromRI, toRI) {
-        return fromRI / toRI;
-    },
-
-    betweenTwoVectors: function(v1, v2) {
-        let m1 = Math.sqrt(Math.pow(v1.x, 2) + Math.pow(v1.y, 2));
-        let m2 = Math.sqrt(Math.pow(v2.x, 2) + Math.pow(v2.y, 2));
-
-        return Math.degrees(Math.acos(v1.dot(v2) / (m1 * m2)));
-    }
-};
-
 function round(number, precision) {
     let factor = Math.pow(10, precision);
     let tempNumber = number * factor;
     let roundedTempNumber = Math.round(tempNumber);
     return roundedTempNumber / factor;
-}
-
-function getKeyByValue(object, value) {
-  return Object.keys(object).find(key => object[key] === value);
 }
