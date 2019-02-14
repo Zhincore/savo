@@ -1,48 +1,36 @@
 class Mirror extends Path {
-    constructor(x1, y1, x2, y2) {
+    static create(point1, point2) {
+        let group = new Group();
+        let mirror = new this(point1, point2);
+        group.addChild(mirror);
+
+        mirror.moveTo(point1.x, point1.y);
+        mirror.lineTo(point2.x, point2.y);
+
+        return mirror;
+    }
+
+    constructor(point1, point2) {
         super();
 
-        this.angle = Angle.calculateFor2Points(x1, y1, x2, y2);
+        //style
+        this.strokeColor = '#affeff66';
+        this.strokeWidth = 4;
+        //endstyle
+
+        this.data.type = "mirror";
+        this.name = "mesh";
+
+        this.angle = Angle.calculateFor2Points(point1, point2);
         this.data.movable = true;
     }
 
-    getX1() {
-        return this.getSegments()[0].point.x;
-    }
-
-    getY1() {
-        return this.getSegments()[0].point.y;
-    }
-
-    getX2() {
-        return this.getSegments()[1].point.x;
-    }
-
-    getY2() {
-        return this.getSegments()[1].point.y;
-    }
-
     getPoint1() {
-        return new Point(this.getX1(), this.getY1());
+        return this.getSegments()[0].point;
     }
 
     getPoint2() {
-        return new Point(this.getX2(), this.getY2());
-    }
-
-    static create(x1, y1, x2, y2) {
-        let group = new Group();
-        let mirror = new this(x1, y1, x2, y2);
-
-        mirror.strokeColor = '#affeff66';
-        mirror.strokeWidth = 4;
-        mirror.moveTo(x1, y1);
-        mirror.lineTo(x2, y2);
-        mirror.data.type = "mirror";
-        mirror.name = "mesh";
-
-        group.addChild(mirror);
-        return mirror;
+        return this.getSegments()[1].point;
     }
 
     rotate(angle){
@@ -59,5 +47,20 @@ class Mirror extends Path {
         let v = this.getVector();
         this.rotate(-90);
         return v;
+    }
+
+    // Events
+    onFocus() {
+        if(App.config.debug) {
+            console.log('focus', this);
+            this.selected = true;
+        }
+    }
+
+    onUnfocus() {
+        if(App.config.debug) {
+            console.log('unfocus', this);
+            this.selected = false;
+        }
     }
 }

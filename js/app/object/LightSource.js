@@ -6,11 +6,10 @@ class LightSource extends Group {
 
         //correcting variables
         angle = round(angle % 360, App.config.anglePrecision);
-
         this.angle = angle;
-        this.size = config.size !== undefined ? config.size : 20;
 
         this.config = Object.assign({
+            size: 20,
             color: '#ffffff',
             lightness: 4,
         }, config);
@@ -18,7 +17,7 @@ class LightSource extends Group {
 
     static create(position, angle, config) {
         let lightSource = new this(position, angle, config);
-        let sourceObject = new Path.Rectangle(lightSource.position.subtract(new Point(lightSource.size/2, lightSource.size/2)), lightSource.size);
+        let sourceObject = new Path.Rectangle(lightSource.position.subtract(new Point(lightSource.config.size/2, lightSource.config.size/2)), lightSource.config.size);
         sourceObject.fillColor = lightSource.config.color;
         sourceObject.shadowColor = lightSource.config.color;
         sourceObject.shadowBlur = lightSource.config.color;
